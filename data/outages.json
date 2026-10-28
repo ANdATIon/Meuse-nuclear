@@ -104,8 +104,8 @@
       "plants": [
         "chooz"
       ],
-      "documents": 1144,
-      "matched": 9
+      "documents": 1147,
+      "matched": 10
     },
     "BE": {
       "key": "BE",
@@ -114,7 +114,7 @@
         "tihange",
         "doel"
       ],
-      "documents": 312,
+      "documents": 322,
       "matched": 33
     }
   },
@@ -122,7 +122,7 @@
   "to": "2026-11-05",
   "fromTs": 1790553600000,
   "toTs": 1793836800000,
-  "fetchedAt": 1793184506414,
+  "fetchedAt": 1793206776976,
   "notices": [
     {
       "id": "ZXqa5bcAruMJF2MqxV67nA",
@@ -150,8 +150,33 @@
       "docType": "A80"
     },
     {
-      "id": "eXUAQxE_78G-YZlaAE_9Qw",
+      "id": "tjFtT-Es6Ff5vhv6s38-7w",
       "revision": 1,
+      "status": "active",
+      "statusCode": "A05",
+      "kind": "planned",
+      "businessType": "A53",
+      "reasonCode": "A95",
+      "reason": "complementary information",
+      "reasonText": "Remontée à puissance maximale sans palier.\n--------\nRamp-up to maximal power without load threshold.",
+      "comment": null,
+      "unitKey": "chooz1",
+      "unitName": "CHOOZ 1",
+      "unitLabel": "Chooz B1",
+      "plantKey": "chooz",
+      "plantLabel": "Chooz",
+      "zoneKey": "FR",
+      "eic": "17W100P100P01954",
+      "installedMW": 1500.0,
+      "availableMW": 1450.0,
+      "start": 1793205000000,
+      "end": 1793219400000,
+      "created": 1793204977000,
+      "docType": "A80"
+    },
+    {
+      "id": "eXUAQxE_78G-YZlaAE_9Qw",
+      "revision": 2,
       "status": "active",
       "statusCode": "A05",
       "kind": "forced",
@@ -170,13 +195,13 @@
       "installedMW": 1500.0,
       "availableMW": 1270.0,
       "start": 1793178000000,
-      "end": 1793206800000,
-      "created": 1793178475000,
+      "end": 1793205000000,
+      "created": 1793204774000,
       "docType": "A80"
     },
     {
       "id": "nDpTLESd_ElXAjmRG-dVFg",
-      "revision": 3,
+      "revision": 4,
       "status": "active",
       "statusCode": "A05",
       "kind": "planned",
@@ -195,8 +220,8 @@
       "installedMW": 1500.0,
       "availableMW": 1450.0,
       "start": 1793134800000,
-      "end": 1793221200000,
-      "created": 1793178337000,
+      "end": 1793205000000,
+      "created": 1793204803000,
       "docType": "A80"
     },
     {
@@ -1176,9 +1201,9 @@
     }
   ],
   "counts": {
-    "documents": 1456,
-    "matched": 42,
-    "active": 33,
+    "documents": 1469,
+    "matched": 43,
+    "active": 34,
     "activeForced": 4
   },
   "warnings": []

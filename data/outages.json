@@ -104,8 +104,8 @@
       "plants": [
         "chooz"
       ],
-      "documents": 1129,
-      "matched": 8
+      "documents": 1144,
+      "matched": 9
     },
     "BE": {
       "key": "BE",
@@ -114,7 +114,7 @@
         "tihange",
         "doel"
       ],
-      "documents": 308,
+      "documents": 312,
       "matched": 33
     }
   },
@@ -122,7 +122,7 @@
   "to": "2026-11-05",
   "fromTs": 1790553600000,
   "toTs": 1793836800000,
-  "fetchedAt": 1793160811695,
+  "fetchedAt": 1793184506414,
   "notices": [
     {
       "id": "ZXqa5bcAruMJF2MqxV67nA",
@@ -150,8 +150,33 @@
       "docType": "A80"
     },
     {
+      "id": "eXUAQxE_78G-YZlaAE_9Qw",
+      "revision": 1,
+      "status": "active",
+      "statusCode": "A05",
+      "kind": "forced",
+      "businessType": "A54",
+      "reasonCode": "B18",
+      "reason": "failure",
+      "reasonText": null,
+      "comment": null,
+      "unitKey": "chooz1",
+      "unitName": "CHOOZ 1",
+      "unitLabel": "Chooz B1",
+      "plantKey": "chooz",
+      "plantLabel": "Chooz",
+      "zoneKey": "FR",
+      "eic": "17W100P100P01954",
+      "installedMW": 1500.0,
+      "availableMW": 1270.0,
+      "start": 1793178000000,
+      "end": 1793206800000,
+      "created": 1793178475000,
+      "docType": "A80"
+    },
+    {
       "id": "nDpTLESd_ElXAjmRG-dVFg",
-      "revision": 2,
+      "revision": 3,
       "status": "active",
       "statusCode": "A05",
       "kind": "planned",
@@ -170,8 +195,8 @@
       "installedMW": 1500.0,
       "availableMW": 1450.0,
       "start": 1793134800000,
-      "end": 1793192400000,
-      "created": 1793151522000,
+      "end": 1793221200000,
+      "created": 1793178337000,
       "docType": "A80"
     },
     {
@@ -1151,10 +1176,10 @@
     }
   ],
   "counts": {
-    "documents": 1437,
-    "matched": 41,
-    "active": 32,
-    "activeForced": 3
+    "documents": 1456,
+    "matched": 42,
+    "active": 33,
+    "activeForced": 4
   },
   "warnings": []
 }

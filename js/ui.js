@@ -16,6 +16,8 @@ function tickCountdown() {
     ui.countdown.textContent = left > 0 ? (mm + ' dk ' + ss + ' sn') : '…';
   }
 }
+
+function setCardBusy(card, busy) {
   card.classList.toggle('busy', busy);
 }
 

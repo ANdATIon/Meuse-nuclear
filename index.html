@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Reaktörler · Chooz, Tihange, Doel</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="wrap">
+
+  <div class="topbar">
+    <div class="brand">
+      <span class="pulse" id="statusDot" title="Veri durumu"></span>
+      <div>
+        <h1>Reaktörler</h1>
+        <p class="sub">Chooz · Tihange · Doel — ENTSO-E üretim, kullanılabilirlik ve kesinti bildirimleri</p>
+      </div>
+    </div>
+    <div class="tools">
+      <span class="chip">Brüksel saati: <b id="tzLabel">—</b></span>
+      <span class="chip">Son güncelleme: <b id="updatedLabel">—</b></span>
+      <span class="chip">Sonraki yenileme: <b id="countdown">—</b></span>
+      <button id="refreshBtn" type="button">Yenile</button>
+    </div>
+  </div>
+
+  <div class="banner" id="banner" role="alert" hidden>
+    <div>
+      <strong id="bannerTitle">Veri alınamadı</strong>
+      <span id="bannerMsg"></span>
+    </div>
+  </div>
+
+  <section class="section" id="reactorSection">
+    <div class="section-head">
+      <div>
+        <h2>Reaktörler</h2>
+        <p class="section-sub">Net üretim, kullanılabilir güç, durum ve son 7 gün</p>
+      </div>
+      <span class="section-meta" id="reactorMeta">—</span>
+    </div>
+    <div class="reactor-grid" id="reactorGrid">
+      <div class="reactor-loading"><span class="spinner"></span> Reaktör verisi yükleniyor…</div>
+    </div>
+  </section>
+
+  <div class="toolbar">
+    <div class="seg" id="rangeGroup" role="group" aria-label="Zaman aralığı">
+      <button type="button" class="seg-btn" data-range="24h">24 saat</button>
+      <button type="button" class="seg-btn" data-range="2d">2 gün</button>
+      <button type="button" class="seg-btn is-active" data-range="7d">7 gün</button>
+      <button type="button" class="seg-btn" data-range="14d">2 hafta</button>
+      <button type="button" class="seg-btn" data-range="30d">30 gün</button>
+      <button type="button" class="seg-btn" data-range="custom">Özel</button>
+    </div>
+
+    <div class="custom-range" id="customRange" hidden>
+      <label class="field" for="fromInput">Başlangıç
+        <input type="datetime-local" id="fromInput" step="60">
+      </label>
+      <label class="field" for="toInput">Bitiş
+        <input type="datetime-local" id="toInput" step="60">
+      </label>
+      <button type="button" id="applyRange">Uygula</button>
+    </div>
+
+    <p class="range-warn" id="rangeWarn" hidden><i>⚠</i><span id="rangeWarnText"></span></p>
+  </div>
+
+  <div id="plantSections">
+    <div class="plant-loading"><span class="spinner"></span> Santral yapılandırması yükleniyor…</div>
+  </div>
+
+  <!-- Nehir paneli tek örnektir; JS ilk nehirli santralin (Chooz) altına taşır. -->
+  <div id="riverSource" hidden>
+    <section class="river-panel" id="riverPanel">
+      <div class="section-head river-head">
+        <div>
+          <h2 id="stationTitle">İstasyonlar yükleniyor…</h2>
+          <p class="section-sub">Hub'Eau · Hidrometri · istasyon <code id="stationCode">—</code></p>
+        </div>
+        <div class="viewbar">
+          <div class="seg" id="viewGroup" role="group" aria-label="Görünüm">
+            <button type="button" class="seg-btn is-active" data-view="single">Tek istasyon</button>
+            <button type="button" class="seg-btn" data-view="compare">Karşılaştır</button>
+          </div>
+        </div>
+      </div>
+
+      <nav class="stations" id="stationTabs" aria-label="İstasyon seçimi">
+        <div class="stations-loading"><span class="spinner"></span> İstasyon listesi alınıyor…</div>
+      </nav>
+
+      <div class="hero" id="hero">
+        <div class="hero-card h">
+          <div class="hero-label"><i></i>Su seviyesi</div>
+          <div class="hero-value skeleton" id="hValue">—<span class="unit">m</span></div>
+          <div class="hero-time" id="hTime">—</div>
+        </div>
+        <div class="hero-card q">
+          <div class="hero-label"><i></i>Debi</div>
+          <div class="hero-value skeleton" id="qValue">—<span class="unit">m³/s</span></div>
+          <div class="hero-time" id="qTime">—</div>
+        </div>
+        <div class="hero-card status" id="statusCard">
+          <div class="hero-label"><i></i>Chooz çalışabilir mi?</div>
+          <div class="status-row">
+            <div class="hero-value status-value skeleton" id="statusAvg">—<span class="unit">m³/s</span></div>
+            <div class="status-badge" id="statusBadge">—</div>
+          </div>
+          <div class="status-sub">12 günlük ortalama debi</div>
+          <div class="hero-time" id="statusTrend">—</div>
+          <div class="crossings" id="crossings" aria-label="Eşik geçiş geçmişi">
+            <div class="cross-row">
+              <span class="cross-thr" style="color:#fbbf24">22 m³/s</span>
+              <span class="cross-val" id="cross22">—</span>
+            </div>
+            <div class="cross-row">
+              <span class="cross-thr" style="color:#f87171">20 m³/s</span>
+              <span class="cross-val" id="cross20">—</span>
+            </div>
+          </div>
+          <p class="status-note">Gösterge amaçlıdır; resmi karar EDF ve Fransız-Belçika Meuse anlaşmasına göre verilir.</p>
+        </div>
+      </div>
+
+      <div class="grid">
+        <article class="card" id="hCard">
+          <div class="card-head">
+            <h2>Su seviyesi (H)</h2>
+            <span class="tag"><span id="hTag">son 7 gün</span> · m</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="hChart" role="img" aria-label="Su seviyesi grafiği, metre"></canvas>
+            <div class="overlay"><span class="spinner"></span> Yükleniyor…</div>
+            <div class="chart-empty" id="hEmpty"></div>
+          </div>
+          <p class="card-err" id="hErr" hidden></p>
+          <div class="card-foot" id="hFoot"></div>
+        </article>
+
+        <article class="card" id="qCard">
+          <div class="card-head">
+            <h2>Debi (Q)</h2>
+            <span class="tag"><span id="qTag">son 7 gün</span> · m³/s</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="qChart" role="img" aria-label="Debi grafiği, saniyede metreküp"></canvas>
+            <div class="overlay"><span class="spinner"></span> Yükleniyor…</div>
+            <div class="chart-empty" id="qEmpty"></div>
+          </div>
+          <p class="card-err" id="qErr" hidden></p>
+          <div class="card-foot" id="qFoot"></div>
+        </article>
+
+        <article class="card wide" id="dCard">
+          <div class="card-head">
+            <h2>Günlük ortalama debi (QmnJ)</h2>
+            <span class="tag">son <b>365 gün</b> · m³/s</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="dChart" role="img" aria-label="Son 365 günün günlük ortalama debi grafiği, saniyede metreküp"></canvas>
+            <div class="overlay"><span class="spinner"></span> Yükleniyor…</div>
+            <div class="chart-empty" id="dEmpty"></div>
+          </div>
+          <p class="card-err" id="dErr" hidden></p>
+          <div class="card-foot" id="dFoot"></div>
+        </article>
+
+        <article class="card wide" id="cmpCard" hidden>
+          <div class="card-head">
+            <h2>İstasyon karşılaştırması — Debi (Q)</h2>
+            <span class="tag"><span id="cmpTag">son 7 gün</span> · m³/s</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="cmpChart" role="img" aria-label="İki istasyonun debi karşılaştırma grafiği, saniyede metreküp"></canvas>
+            <div class="overlay"><span class="spinner"></span> Yükleniyor…</div>
+            <div class="chart-empty" id="cmpEmpty"></div>
+          </div>
+          <p class="card-err" id="cmpErr" hidden></p>
+          <div class="card-foot" id="cmpFoot"></div>
+        </article>
+      </div>
+    </section>
+  </div>
+
+  <footer>
+    Kaynak: <a href="https://hubeau.eaufrance.fr/page/api-hydrometrie" target="_blank" rel="noopener">Hub'Eau — API Hydrométrie</a>
+    (observations_tr &amp; obs_elab) ve <a href="https://transparency.entsoe.eu/" target="_blank" rel="noopener">ENTSO-E Transparency Platform</a>
+    (A73 / A80 / A77). Ham birimler: mm ve l/s → m ve m³/s'ye çevrilmiştir.<br>
+    Üretim ve kesinti verileri 5 dakikada bir, eksik A73 günleri 30 saniyede bir yoklanır. Tüm saatler Europe/Brussels saat diliminde gösterilir.
+  </footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/api.js"></script>
+<script src="js/river.js"></script>
+<script src="js/entsoe.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

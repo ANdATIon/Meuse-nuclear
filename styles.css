@@ -573,18 +573,89 @@
   .river-panel .section-head{align-items:center}
   .river-panel .station-tab{flex-basis:260px}
 
-  @media (max-width:640px){
-    .reactor-grid{grid-template-columns:1fr}
+  @media (max-width:700px){
+    body{padding:16px 12px 36px;overflow-x:hidden}
+    .wrap{width:100%;max-width:100%;overflow-x:hidden}
+
+    /* Stack cards and sections in one column, avoid overflow */
+    .hero,
+    .grid,
+    .reactor-grid{
+      grid-template-columns:1fr !important;
+    }
+
+    .card,
+    .hero-card,
+    .reactor-card{
+      min-width:0;
+      width:100%;
+    }
+
+    /* Readable chart dimensions */
+    .chart-box{height:250px;min-height:220px}
+    .card.wide .chart-box{height:260px}
+
+    /* Header and toolbars */
+    h1{font-size:1.1rem}
+    .topbar{flex-direction:column;align-items:stretch;gap:12px}
+    .tools{width:100%;justify-content:space-between}
+
+    /* Bigger, thumb-friendly buttons and touch targets */
+    button{
+      padding:11px 20px;
+      font-size:.86rem;
+      min-height:42px;
+    }
+    .tools button{
+      flex:1;
+    }
+
+    /* Station tabs */
+    .stations{flex-direction:column}
+    .station-tab{
+      flex-basis:100%;
+      min-height:44px;
+      padding:12px 14px;
+      font-size:.86rem;
+    }
+    .station-tab .code{font-size:.74rem}
+
+    /* Segmented controls and toolbars */
+    .toolbar, .viewbar{
+      flex-direction:column;
+      align-items:stretch;
+      gap:10px;
+    }
+    .seg{
+      width:100%;
+      display:flex;
+      justify-content:stretch;
+    }
+    .seg-btn{
+      flex:1;
+      padding:10px 12px;
+      font-size:.82rem;
+      min-height:40px;
+      text-align:center;
+    }
+    .custom-range{
+      width:100%;
+      flex-direction:column;
+      align-items:stretch;
+    }
+    .custom-range .field{
+      width:100%;
+      justify-content:space-between;
+    }
+    .custom-range input[type="datetime-local"]{
+      flex:1;
+      min-height:38px;
+    }
+
     .section-head{align-items:flex-start}
     .reactor-net{font-size:2rem}
-    body{padding:20px 12px 40px}
-    .chart-box{height:230px}
-    h1{font-size:1.05rem}
-    .station-tab{flex-basis:100%}
-    .seg-btn{padding:7px 11px}
-    .seg{width:100%;justify-content:space-between}
-    .viewbar .seg{width:100%}
     .notice-mw{margin-left:0;flex-basis:100%}
-    .card-head .toggle{order:3;flex-basis:100%;margin-top:5px;margin-left:0}
+    .card-head .toggle{order:3;flex-basis:100%;margin-top:6px;margin-left:0;padding:6px 0}
+    .card-head .toggle input{width:16px;height:16px}
     .unit-row .status-badge{margin-left:0}
   }

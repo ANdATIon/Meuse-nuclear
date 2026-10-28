@@ -108,8 +108,15 @@ async function fetchEntsoe(path, opts) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
+  let targetUrl = entsoeBase() + path;
+  if (path.startsWith('/api/entsoe/generation')) {
+    targetUrl = './data/generation.json';
+  } else if (path.startsWith('/api/entsoe/outages')) {
+    targetUrl = './data/outages.json';
+  }
+
   try {
-    const res = await fetch(entsoeBase() + path, {
+    const res = await fetch(targetUrl, {
       signal: controller.signal,
       headers: { Accept: 'application/json' },
       cache: 'no-store'
@@ -123,7 +130,7 @@ async function fetchEntsoe(path, opts) {
     }
 
     if (!json) {
-      const e = new Error('Backend geçersiz yanıt döndü (HTTP ' + res.status + ').');
+      const e = new Error('Veri geçersiz yanıt döndü (HTTP ' + res.status + ').');
       e.code = 'bad_response';
       throw e;
     }
@@ -144,7 +151,7 @@ async function fetchEntsoe(path, opts) {
       throw e;
     }
     if (err instanceof TypeError) {
-      const e = new Error('Backend\'e ulaşılamadı: ' + (entsoeBase() || location.origin));
+      const e = new Error('Veriye ulaşılamadı: ' + targetUrl);
       e.code = 'network';
       throw e;
     }

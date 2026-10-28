@@ -4,10 +4,18 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Reaktörler · Chooz, Tihange, Doel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <div class="wrap">
+
+  <div class="top-strip" id="topStrip">
+    <div class="top-strip-left" id="topStripUnits"></div>
+    <div class="top-strip-right" id="topStripMetrics"></div>
+  </div>
 
   <div class="topbar">
     <div class="brand">
@@ -128,7 +136,10 @@
       <div class="grid">
         <article class="card" id="hCard">
           <div class="card-head">
-            <h2>Su seviyesi (H)</h2>
+            <div>
+              <h2>Su seviyesi (H)</h2>
+              <div class="card-source">Hub'Eau API Hydrométrie (observations_tr)</div>
+            </div>
             <span class="tag"><span id="hTag">son 7 gün</span> · m</span>
           </div>
           <div class="chart-box">
@@ -142,7 +153,10 @@
 
         <article class="card" id="qCard">
           <div class="card-head">
-            <h2>Debi (Q)</h2>
+            <div>
+              <h2>Debi (Q)</h2>
+              <div class="card-source">Hub'Eau API Hydrométrie (observations_tr)</div>
+            </div>
             <span class="tag"><span id="qTag">son 7 gün</span> · m³/s</span>
           </div>
           <div class="chart-box">
@@ -156,7 +170,10 @@
 
         <article class="card wide" id="dCard">
           <div class="card-head">
-            <h2>Günlük ortalama debi (QmnJ)</h2>
+            <div>
+              <h2>Günlük ortalama debi (QmnJ)</h2>
+              <div class="card-source">Hub'Eau API Hydrométrie (obs_elab)</div>
+            </div>
             <span class="tag">son <b>365 gün</b> · m³/s</span>
           </div>
           <div class="chart-box">
@@ -170,7 +187,10 @@
 
         <article class="card wide" id="cmpCard" hidden>
           <div class="card-head">
-            <h2>İstasyon karşılaştırması — Debi (Q)</h2>
+            <div>
+              <h2>İstasyon karşılaştırması — Debi (Q)</h2>
+              <div class="card-source">Hub'Eau API Hydrométrie (observations_tr)</div>
+            </div>
             <span class="tag"><span id="cmpTag">son 7 gün</span> · m³/s</span>
           </div>
           <div class="chart-box">

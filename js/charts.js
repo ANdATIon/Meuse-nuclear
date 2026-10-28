@@ -44,18 +44,18 @@ const thresholdPlugin = {
 
     const ctx = chart.ctx;
     ctx.save();
-    ctx.font = '600 10px "Segoe UI", system-ui, sans-serif';
+    ctx.font = '600 10px "JetBrains Mono", monospace';
     ctx.textBaseline = 'middle';
 
     for (const line of opts.lines) {
       const y = yScale.getPixelForValue(line.value);
       if (!Number.isFinite(y) || y < area.top - 1 || y > area.bottom + 1) continue;
 
-      // Kesikli eşik çizgisi
+      // Kesikli eşik çizgisi --warn
       ctx.beginPath();
-      ctx.setLineDash([6, 5]);
-      ctx.lineWidth = 1.3;
-      ctx.strokeStyle = line.color;
+      ctx.setLineDash([4, 4]);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#D29922';
       ctx.moveTo(area.left, y);
       ctx.lineTo(area.right, y);
       ctx.stroke();
@@ -64,23 +64,79 @@ const thresholdPlugin = {
       if (!line.showLabel) continue;
 
       // Sağ üst/köşede küçük etiket
-      const padX = 6;
-      const labelH = 17;
+      const padX = 5;
+      const labelH = 15;
       const boxW = ctx.measureText(line.label).width + padX * 2;
       const boxX = area.right - boxW - 4;
-      let boxY = line.labelOffset === 'below' ? y + 4 : y - labelH - 4;
+      let boxY = line.labelOffset === 'below' ? y + 3 : y - labelH - 3;
       boxY = Math.max(area.top + 2, Math.min(boxY, area.bottom - labelH - 2));
 
-      roundRectPath(ctx, boxX, boxY, boxW, labelH, 5);
-      ctx.fillStyle = 'rgba(6,10,19,.82)';
+      roundRectPath(ctx, boxX, boxY, boxW, labelH, 2);
+      ctx.fillStyle = '#0B0F14';
       ctx.fill();
-      ctx.strokeStyle = hexToRgba(line.color, 0.38);
+      ctx.strokeStyle = '#D29922';
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      ctx.fillStyle = line.color;
+      ctx.fillStyle = '#D29922';
       ctx.fillText(line.label, boxX + padX, boxY + labelH / 2 + 0.5);
     }
+
+    ctx.restore();
+  }
+};
+
+const lastValueLabelPlugin = {
+  id: 'lastValueLabel',
+  afterDatasetsDraw(chart) {
+    const area = chart.chartArea;
+    const meta = chart.getSortedVisibleDatasetMetas();
+    if (!area || !meta || !meta.length) return;
+
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.font = '600 10px "JetBrains Mono", monospace';
+    ctx.textBaseline = 'middle';
+
+    meta.forEach((m) => {
+      const ds = chart.data.datasets[m.index];
+      if (!ds || ds.hidden || !m.data || !m.data.length) return;
+
+      // Find the last valid point in m.data
+      let lastPoint = null;
+      let lastRaw = null;
+      for (let i = m.data.length - 1; i >= 0; i--) {
+        const p = m.data[i];
+        if (p && Number.isFinite(p.x) && Number.isFinite(p.y) && !p.skip) {
+          lastPoint = p;
+          lastRaw = ds.data[i];
+          break;
+        }
+      }
+      if (!lastPoint || lastRaw == null) return;
+      const val = typeof lastRaw === 'object' && lastRaw !== null ? lastRaw.y : lastRaw;
+      if (!Number.isFinite(val)) return;
+
+      const fmt = typeof ds.$fmt === 'function' ? ds.$fmt : (v) => Number(v).toFixed(1);
+      const text = fmt(val);
+      const textW = ctx.measureText(text).width;
+      const pad = 3;
+      let lx = lastPoint.x + 5;
+      if (lx + textW + pad * 2 > area.right) {
+        lx = lastPoint.x - textW - pad * 2 - 5;
+      }
+      let ly = Math.max(area.top + 7, Math.min(lastPoint.y, area.bottom - 7));
+
+      roundRectPath(ctx, lx, ly - 7, textW + pad * 2, 14, 2);
+      ctx.fillStyle = '#0F151C';
+      ctx.fill();
+      ctx.strokeStyle = '#1F2933';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = ds.borderColor || '#E6EDF3';
+      ctx.fillText(text, lx + pad, ly + 0.5);
+    });
 
     ctx.restore();
   }
@@ -119,17 +175,7 @@ const zeroLinePlugin = {
 /* ------------------------------------------------------------------
    Grafik Yapıcılar
    ------------------------------------------------------------------ */
-function areaGradient(hex) {
-  return (context) => {
-    const { ctx, chartArea } = context.chart;
-    if (!chartArea) return 'transparent';
-    const g = ctx.createLinearGradient(0, chartArea.top, 0, chartArea.bottom);
-    g.addColorStop(0, hexToRgba(hex, 0.30));
-    g.addColorStop(0.75, hexToRgba(hex, 0.05));
-    g.addColorStop(1, hexToRgba(hex, 0));
-    return g;
-  };
-}
+function zeroLinePluginStub() {}
 
 /**
  * x ekseni "linear" (ms zaman damgası) — Chart.js tarih eklentisi gerekmez,
@@ -143,15 +189,15 @@ function buildChart(canvasId, opts) {
         label: opts.label,
         data: [],
         borderColor: opts.color,
-        borderWidth: 1.7,
-        backgroundColor: areaGradient(opts.color),
-        fill: true,
+        borderWidth: 1.5,
+        backgroundColor: 'transparent',
+        fill: false,
         tension: opts.tension,
         pointRadius: 0,
         pointHoverRadius: 4,
         pointHoverBackgroundColor: opts.color,
-        pointHoverBorderColor: '#0a1120',
-        pointHoverBorderWidth: 2,
+        pointHoverBorderColor: '#0F151C',
+        pointHoverBorderWidth: 1.5,
         spanGaps: false
       }]
     },
@@ -166,15 +212,16 @@ function buildChart(canvasId, opts) {
           position: opts.legendPosition || 'top',
           align: 'end',
           labels: {
-            color: '#8ea3c0',
+            color: '#6E7681',
             usePointStyle: true,
             pointStyle: 'line',
             boxWidth: 18,
             boxHeight: 8,
             padding: 14,
-            font: { size: 10.5 }
+            font: { size: 10, family: 'Inter' }
           }
         } : { display: false },
+        lastValueLabel: { enabled: true },
         hubeauThresholds: {
           enabled: !!opts.thresholds,
           lines: opts.thresholds ? thresholdLineList() : []
@@ -183,13 +230,13 @@ function buildChart(canvasId, opts) {
           enabled: !!opts.zeroLine
         },
         tooltip: {
-          backgroundColor: 'rgba(9,15,26,.96)',
-          borderColor: 'rgba(148,163,184,.22)',
+          backgroundColor: '#0F151C',
+          borderColor: '#1F2933',
           borderWidth: 1,
-          titleColor: '#dbe6f7',
-          bodyColor: '#f1f5fb',
+          titleColor: '#E6EDF3',
+          bodyColor: '#E6EDF3',
           padding: 11,
-          cornerRadius: 9,
+          cornerRadius: 2,
           displayColors: false,
           callbacks: {
             title: (items) => (items.length ? opts.titleFormat(items[0].parsed.x) : ''),
@@ -219,15 +266,15 @@ function buildChart(canvasId, opts) {
         x: {
           type: 'linear',
           bounds: 'data',
-          grid: { color: 'rgba(148,163,184,.07)', drawTicks: false },
+          grid: { color: '#1F2933', drawTicks: false },
           border: { display: false },
           ticks: {
-            color: '#7f93ae',
+            color: '#6E7681',
             maxRotation: 0,
             autoSkip: true,
             maxTicksLimit: opts.maxTicks,
             padding: 8,
-            font: { size: 10.5 },
+            font: { size: 10, family: 'Inter' },
             callback: function (value) {
               const fmt = (this.chart && this.chart.$tickFmt) || opts.tickFormat;
               return fmt(value);
@@ -236,12 +283,12 @@ function buildChart(canvasId, opts) {
         },
         y: {
           suggestedMax: opts.suggestedMax,
-          grid: { color: 'rgba(148,163,184,.07)', drawTicks: false },
+          grid: { color: '#1F2933', drawTicks: false },
           border: { display: false },
           ticks: {
-            color: '#7f93ae',
+            color: '#6E7681',
             padding: 8,
-            font: { size: 10.5 },
+            font: { size: 10, family: 'JetBrains Mono' },
             maxTicksLimit: 6,
             callback: (value) => opts.yFormat(value)
           }
@@ -252,9 +299,13 @@ function buildChart(canvasId, opts) {
 }
 
 function initCharts() {
+  if (typeof Chart !== 'undefined' && typeof lastValueLabelPlugin !== 'undefined') {
+    Chart.register(lastValueLabelPlugin);
+  }
+
   charts.h = buildChart('hChart', {
     label: 'Su seviyesi (m)',
-    color: COLORS.h,
+    color: '#39C5CF',
     unit: 'm',
     tension: 0.22,
     maxTicks: 7,
@@ -266,7 +317,7 @@ function initCharts() {
 
   charts.q = buildChart('qChart', {
     label: 'Debi (ham)',
-    color: COLORS.q,
+    color: '#39C5CF',
     unit: 'm³/s',
     tension: 0.22,
     maxTicks: 7,
@@ -283,22 +334,22 @@ function initCharts() {
   charts.q.data.datasets.push({
     label: CONFIG.rolling.windowDays + ' günlük ortalama',
     data: [],
-    borderColor: CONFIG.colors.rolling,
-    borderWidth: 2.8,
+    borderColor: '#D29922',
+    borderWidth: 1.5,
     backgroundColor: 'transparent',
     fill: false,
     tension: 0.3,
     pointRadius: 0,
     pointHoverRadius: 4,
-    pointHoverBackgroundColor: CONFIG.colors.rolling,
-    pointHoverBorderColor: '#0a1120',
-    pointHoverBorderWidth: 2,
+    pointHoverBackgroundColor: '#D29922',
+    pointHoverBorderColor: '#0F151C',
+    pointHoverBorderWidth: 1.5,
     spanGaps: false
   });
 
   charts.d = buildChart('dChart', {
     label: 'Günlük ortalama debi (m³/s)',
-    color: COLORS.d,
+    color: '#39C5CF',
     unit: 'm³/s',
     tension: 0.15,
     maxTicks: 9,
@@ -311,7 +362,7 @@ function initCharts() {
   // Karşılaştırma grafiği: veri setleri istasyonlara göre dinamik oluşturulur.
   charts.cmp = buildChart('cmpChart', {
     label: 'Debi (m³/s)',
-    color: CONFIG.colors.compare[0],
+    color: '#39C5CF',
     unit: 'm³/s',
     tension: 0.2,
     maxTicks: 8,
@@ -359,15 +410,15 @@ function initPlantCharts() {
         label: units[index].label + ' (MW)',
         data: [],
         borderColor: color,
-        borderWidth: 1.7,
+        borderWidth: 1.5,
         backgroundColor: 'transparent',
         fill: false,
         tension: 0.16,
         pointRadius: 0,
         pointHoverRadius: 4,
         pointHoverBackgroundColor: color,
-        pointHoverBorderColor: '#0a1120',
-        pointHoverBorderWidth: 2,
+        pointHoverBorderColor: '#0F151C',
+        pointHoverBorderWidth: 1.5,
         spanGaps: false,
         $unit: 'MW',
         $fmt: (v) => nfMW.format(v),
@@ -375,63 +426,7 @@ function initPlantCharts() {
       });
     }
 
-    if (plant.river) {
-      const overlayIndex = chart.data.datasets.length;
-      chart.$overlayIndex = overlayIndex;
-      chart.data.datasets.push({
-        label: CONFIG.rolling.windowDays + ' günlük ortalama debi',
-        data: [],
-        borderColor: CONFIG.colors.genOverlay,
-        borderWidth: 2.6,
-        backgroundColor: 'transparent',
-        fill: false,
-        tension: 0.3,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        pointHoverBackgroundColor: CONFIG.colors.genOverlay,
-        pointHoverBorderColor: '#0a1120',
-        pointHoverBorderWidth: 2,
-        yAxisID: 'y1',
-        hidden: true,
-        spanGaps: false,
-        $unit: 'm³/s',
-        $fmt: (v) => nfQ.format(v)
-      });
-
-      chart.options.scales.y1 = {
-        position: 'right',
-        display: false,
-        grid: { drawOnChartArea: false, color: 'rgba(148,163,184,.07)' },
-        border: { display: false },
-        ticks: {
-          color: CONFIG.colors.genOverlay,
-          padding: 8,
-          font: { size: 10.5 },
-          maxTicksLimit: 6,
-          callback: (value) => nfTick.format(value)
-        }
-      };
-
-      chart.options.plugins.legend.onClick = (evt, item, legend) => {
-        if (item.datasetIndex === overlayIndex) {
-          const input = $('genOverlay_' + plant.key);
-          if (input) input.checked = !input.checked;
-          applyGenOverlay(plant.key);
-          return;
-        }
-        Chart.defaults.plugins.legend.onClick.call(legend, evt, item, legend);
-      };
-    }
-
     charts.gen.set(plant.key, chart);
-  });
-
-  orderedPlants().forEach((plant) => {
-    const input = $('genOverlay_' + plant.key);
-    if (!input) return;
-    input.checked = !!CONFIG.entsoe.productionOverlayDefault;
-    input.addEventListener('change', () => applyGenOverlay(plant.key));
-    applyGenOverlay(plant.key);
   });
 }
 
@@ -446,17 +441,7 @@ function setChartTickFormat(chart, fmt) {
   chart.$tickFmt = fmt;
 }
 
-function applyGenOverlay(plantKey) {
-  const chart = charts.gen.get(plantKey);
-  if (!chart || chart.$overlayIndex == null) return;
-
-  const input = $('genOverlay_' + plantKey);
-  const visible = !!(input && input.checked);
-  const overlay = chart.data.datasets[chart.$overlayIndex];
-  if (overlay) overlay.hidden = !visible;
-  if (chart.options.scales.y1) chart.options.scales.y1.display = visible;
-  chart.update('none');
-}
+// applyGenOverlay removed as rolling average overlay is removed from MW chart
 
 function resetCharts() {
   ['h', 'q', 'd'].forEach((key) => {

@@ -4,7 +4,18 @@
    error banners, tabs and time-range selector
    ------------------------------------------------------------------ */
 
-function setCardBusy(card, busy) {
+function tickCountdown() {
+  if (typeof nextRefreshAt === 'undefined' || !nextRefreshAt) {
+    if (ui.countdown) ui.countdown.textContent = '—';
+    return;
+  }
+  const left = Math.max(0, nextRefreshAt - Date.now());
+  const mm = Math.floor(left / 60000);
+  const ss = Math.floor((left % 60000) / 1000);
+  if (ui.countdown) {
+    ui.countdown.textContent = left > 0 ? (mm + ' dk ' + ss + ' sn') : '…';
+  }
+}
   card.classList.toggle('busy', busy);
 }
 
@@ -86,11 +97,8 @@ function renderBanner() {
 function plantSectionHtml(plant) {
   const key = esc(plant.key);
   const units = orderedUnits(plant);
-  const color = CONFIG.entsoe.plantColors[plant.key] || CONFIG.colors.compare[0];
-  const overlay = plant.river
-    ? '<label class="toggle" title="12 günlük ortalama debiyi ikinci eksende göster">' +
-      '<input type="checkbox" id="genOverlay_' + key + '" /> 12 günlük ortalama debi</label>'
-    : '';
+  const color = '#58A6FF';
+  const overlay = '';
   const riverHost = plant.river
     ? '<div class="river-host" data-river-host="' + key + '"></div>'
     : '';
@@ -107,9 +115,13 @@ function plantSectionHtml(plant) {
     '</div>' +
     '<div class="grid">' +
       '<article class="card wide" id="genCard_' + key + '">' +
-        '<div class="card-head"><h2>' + esc(plant.label) + ' üretimi (ENTSO-E)</h2>' +
-          overlay +
-          '<span class="tag"><span id="genTag_' + key + '">son 7 gün</span> · MW</span></div>' +
+        '<div class="card-head">' +
+          '<div>' +
+            '<h2>' + esc(plant.label) + ' üretimi</h2>' +
+            '<div class="card-source">ENTSO-E Transparency Platform (A73)</div>' +
+          '</div>' +
+          '<span class="tag"><span id="genTag_' + key + '">son 7 gün</span> · MW</span>' +
+        '</div>' +
         '<div class="chart-box">' +
           '<canvas id="genChart_' + key + '" role="img" aria-label="' +
             esc(plant.label) + ' üretim grafiği, megavat"></canvas>' +
@@ -120,8 +132,13 @@ function plantSectionHtml(plant) {
         '<div class="card-foot" id="genFoot_' + key + '"></div>' +
       '</article>' +
       '<article class="card wide" id="noticeCard_' + key + '">' +
-        '<div class="card-head"><h2>' + esc(plant.label) + ' kesinti bildirimleri</h2>' +
-          '<span class="tag" id="noticeTag_' + key + '">—</span></div>' +
+        '<div class="card-head">' +
+          '<div>' +
+            '<h2>' + esc(plant.label) + ' kesinti bildirimleri</h2>' +
+            '<div class="card-source">ENTSO-E Transparency Platform (A80 / A77)</div>' +
+          '</div>' +
+          '<span class="tag" id="noticeTag_' + key + '">—</span>' +
+        '</div>' +
         '<div class="notice-list" id="noticeList_' + key + '" aria-live="polite">' +
           '<div class="notice-loading">ENTSO-E kesinti bildirimleri yükleniyor…</div></div>' +
         '<p class="card-err" id="noticeErr_' + key + '" hidden></p>' +
@@ -334,7 +351,23 @@ function renderLiveCard(key, series) {
   }
 
   const bounds = currentBounds();
-  const points = filterPoints(series.points, bounds);
+  let points = filterPoints(series.points, bounds);
+
+  // Water level: single point drop >0.05m and recover on next point -> set to null
+  if (key === 'h' && points.length >= 3) {
+    points = points.map((p, i, arr) => {
+      if (i > 0 && i < arr.length - 1) {
+        const prev = arr[i - 1];
+        const next = arr[i + 1];
+        if (Number.isFinite(p.y) && Number.isFinite(prev.y) && Number.isFinite(next.y)) {
+          if ((prev.y - p.y > 0.05) && (next.y - p.y > 0.05)) {
+            return { x: p.x, y: null };
+          }
+        }
+      }
+      return p;
+    });
+  }
 
   if (points.length < 2) {
     clearLiveChart(key);
@@ -595,6 +628,71 @@ function sparklineSvg(points) {
     '</svg>';
 }
 
+function renderTopStrip(units, genUnits, notices, now, es) {
+  const leftEl = $('topStripUnits');
+  const rightEl = $('topStripMetrics');
+  if (!leftEl || !rightEl) return;
+
+  const unitShortNames = {
+    chooz1: 'B1',
+    chooz2: 'B2',
+    doel4: 'D4',
+    tihange3: 'T3'
+  };
+
+  const order = ['chooz1', 'chooz2', 'doel4', 'tihange3'];
+  let totalNet = 0;
+  let hasExcluded = false;
+
+  const unitMap = new Map((units || []).map(u => [u.key, u]));
+
+  const unitHtml = order.map(k => {
+    const unit = unitMap.get(k) || { key: k, label: k };
+    const genUnit = genUnits.get(k);
+    const snap = unitSnapshot(k, genUnit, notices, now, es && es.beAttribution);
+
+    const latest = genUnit && genUnit.points && genUnit.points.length
+      ? genUnit.points[genUnit.points.length - 1]
+      : null;
+    const isStale24h = !latest || (now - latest[0] > 24 * 60 * 60 * 1000);
+
+    let dotClass = 'ok';
+    if (isStale24h) {
+      dotClass = 'stale';
+      hasExcluded = true;
+    } else {
+      if (snap.tone === 'ok') dotClass = 'ok';
+      else if (snap.tone === 'warn') dotClass = 'warn';
+      else dotClass = 'bad';
+
+      if (snap.netMW != null && Number.isFinite(snap.netMW)) {
+        totalNet += snap.netMW;
+      }
+    }
+
+    const shortName = unitShortNames[k] || snap.label || k;
+    return '<span class="top-strip-unit"><span class="top-strip-dot ' + dotClass + '"></span>' + esc(shortName) + '</span>';
+  }).join('');
+
+  leftEl.innerHTML = unitHtml;
+
+  // Discharge m³/s from current live q
+  const entry = state.live.get(state.code);
+  const qSeries = entry && entry.q;
+  let dischargeText = '—';
+  if (qSeries && qSeries.points && qSeries.points.length) {
+    const lastQ = qSeries.points[qSeries.points.length - 1];
+    if (lastQ && Number.isFinite(lastQ.y)) {
+      dischargeText = nfQ.format(lastQ.y);
+    }
+  }
+
+  const mwStr = nfMW.format(totalNet) + (hasExcluded ? '*' : '') + ' MW';
+  rightEl.innerHTML =
+    '<span class="top-strip-item">NET: <b>' + mwStr + '</b></span>' +
+    '<span class="top-strip-item">DEBİ: <b>' + dischargeText + ' m³/s</b></span>';
+}
+
 function renderReactors() {
   if (!ui.reactorGrid) return;
 
@@ -611,6 +709,8 @@ function renderReactors() {
   const notices = (es.out && es.out.notices) || [];
   const units = allOverviewUnits();
   const activeCount = notices.filter((n) => n.status === 'active').length;
+
+  renderTopStrip(units, genUnits, notices, now, es);
 
   if (ui.reactorMeta) {
     let metaText = units.length + ' reaktör';
@@ -631,7 +731,8 @@ function renderReactors() {
 
   ui.reactorGrid.innerHTML = units.map((unit) => {
     const plant = unit.plant || {};
-    const snap = unitSnapshot(unit.key, genUnits.get(unit.key), notices, now, es && es.beAttribution);
+    const genUnit = genUnits.get(unit.key);
+    const snap = unitSnapshot(unit.key, genUnit, notices, now, es && es.beAttribution);
     const toneClass = snap.tone ? 'tone-' + snap.tone : '';
     const netClass = snap.netMW == null ? ' none' : (snap.netMW < -0.5 ? ' negative' : '');
     const netHtml = snap.netMW == null
@@ -644,7 +745,32 @@ function renderReactors() {
       availHtml = nfMW.format(snap.installedMW) + '<small>MW kurulu</small>';
     }
 
-    const sparkPoints = ((genUnits.get(unit.key) || {}).points || [])
+    const latestPt = genUnit && genUnit.points && genUnit.points.length
+      ? genUnit.points[genUnit.points.length - 1]
+      : null;
+    const isStale24 = !latestPt || (now - latestPt[0] > 24 * 60 * 60 * 1000);
+
+    let statusText = '';
+    let statusClass = '';
+    if (isStale24) {
+      const days = latestPt ? Math.max(1, Math.floor((now - latestPt[0]) / (24 * 60 * 60 * 1000))) : 1;
+      statusText = 'VERİ ESKİ ' + days + 'g';
+      statusClass = 'stale';
+    } else {
+      const lbl = String(snap.label || '').toLowerCase();
+      if (lbl.includes('kapalı')) {
+        statusText = 'KAPALI';
+        statusClass = 'bad';
+      } else if (lbl.includes('kısıtlı')) {
+        statusText = 'KISITLI';
+        statusClass = 'warn';
+      } else {
+        statusText = 'ÇALIŞIYOR';
+        statusClass = 'ok';
+      }
+    }
+
+    const sparkPoints = (genUnit && genUnit.points ? genUnit.points : [])
       .filter((p) => p[0] >= sparkFrom && p[0] <= now);
 
     // Aşılmış bildirim varsa göster
@@ -659,7 +785,7 @@ function renderReactors() {
             esc(plant.countryLabel || plant.country || '') + '</div>' +
           '<div class="reactor-name">' + esc(unit.label) + '</div>' +
         '</div>' +
-        '<span class="status-badge ' + (snap.tone || '') + '">' + esc(snap.label) + '</span>' +
+        '<span class="status-plain ' + statusClass + '">' + esc(statusText) + '</span>' +
       '</div>' +
       '<div class="reactor-net' + netClass + '">' + netHtml + '</div>' +
       '<div class="reactor-metrics">' +
@@ -738,19 +864,7 @@ function renderPlantGenCard(plant) {
     }
   });
 
-  // 12 günlük ortalama debi (ikinci eksen, varsayılan gizli)
-  if (plant.river && chart.$overlayIndex != null) {
-    const live = state.live.get(state.code);
-    const q = live && live.q;
-    const rolling = q && !q.error && Array.isArray(q.rolling) ? q.rolling : [];
-    const overlayPoints = filterPoints(rolling, bounds);
-    const overlay = chart.data.datasets[chart.$overlayIndex];
-    if (overlay) {
-      overlay.data = overlayPoints.length
-        ? withGaps(overlayPoints, CONFIG.gaps.breakMs)
-        : [];
-    }
-  }
+  // 12 günlük ortalama debi (ikinci eksen) kaldırıldı
 
   if (Number.isFinite(latestX)) {
     const first = bounds && bounds.from ? bounds.from : latestX - DAY;
@@ -1135,4 +1249,12 @@ function renderAll() {
   updateHero();
   renderStatusCard();
   renderBanner();
+
+  if (state.entsoe) {
+    const es = state.entsoe;
+    const now = Date.now();
+    const genUnits = new Map(((es.gen && es.gen.units) || []).map((u) => [u.key, u]));
+    const notices = (es.out && es.out.notices) || [];
+    renderTopStrip(allOverviewUnits(), genUnits, notices, now, es);
+  }
 }

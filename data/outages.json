@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 1125,
+      "documents": 1134,
       "matched": 10
     },
     "BE": {
@@ -114,16 +114,41 @@
         "tihange",
         "doel"
       ],
-      "documents": 306,
-      "matched": 33
+      "documents": 311,
+      "matched": 36
     }
   },
   "from": "2026-09-30",
   "to": "2026-11-07",
   "fromTs": 1790726400000,
   "toTs": 1794009600000,
-  "fetchedAt": 1793341069747,
+  "fetchedAt": 1793366594984,
   "notices": [
+    {
+      "id": "PK6y4psB_8-lNI3i0tI6Xw",
+      "revision": 1,
+      "status": "cancelled",
+      "statusCode": "A09",
+      "kind": "planned",
+      "businessType": "A53",
+      "reasonCode": "A95",
+      "reason": "complementary information",
+      "reasonText": "Planned maintenance",
+      "comment": null,
+      "unitKey": "doel4",
+      "unitName": "DOEL 4",
+      "unitLabel": "Doel 4",
+      "plantKey": "doel",
+      "plantLabel": "Doel",
+      "zoneKey": "BE",
+      "eic": "22WDOELX40000793",
+      "installedMW": 1026.0,
+      "availableMW": 0.0,
+      "start": 1793559600000,
+      "end": 1793709000000,
+      "created": 1793352393000,
+      "docType": "A80"
+    },
     {
       "id": "ZXqa5bcAruMJF2MqxV67nA",
       "revision": 1,
@@ -147,6 +172,31 @@
       "start": 1793559600000,
       "end": 1793709000000,
       "created": 1792592891000,
+      "docType": "A80"
+    },
+    {
+      "id": "FEnVFweG353qCVzM_F0cew",
+      "revision": 1,
+      "status": "active",
+      "statusCode": "A05",
+      "kind": "planned",
+      "businessType": "A53",
+      "reasonCode": "A95",
+      "reason": "complementary information",
+      "reasonText": "Planned maintenance",
+      "comment": null,
+      "unitKey": "doel4",
+      "unitName": "DOEL 4",
+      "unitLabel": "Doel 4",
+      "plantKey": "doel",
+      "plantLabel": "Doel",
+      "zoneKey": "BE",
+      "eic": "22WDOELX40000793",
+      "installedMW": 1026.0,
+      "availableMW": 0.0,
+      "start": 1793422800000,
+      "end": 1793548800000,
+      "created": 1793345115000,
       "docType": "A80"
     },
     {
@@ -347,6 +397,31 @@
       "start": 1792972800000,
       "end": 1793012400000,
       "created": 1792975597000,
+      "docType": "A80"
+    },
+    {
+      "id": "WCwVBlmp50gDl11vDtkbgw",
+      "revision": 1,
+      "status": "active",
+      "statusCode": "A05",
+      "kind": "planned",
+      "businessType": "A53",
+      "reasonCode": "A95",
+      "reason": "complementary information",
+      "reasonText": "Planned maintenance",
+      "comment": null,
+      "unitKey": "doel4",
+      "unitName": "DOEL 4",
+      "unitLabel": "Doel 4",
+      "plantKey": "doel",
+      "plantLabel": "Doel",
+      "zoneKey": "BE",
+      "eic": "22WDOELX40000793",
+      "installedMW": 1026.0,
+      "availableMW": 0.0,
+      "start": 1792854000000,
+      "end": 1793422800000,
+      "created": 1793344472000,
       "docType": "A80"
     },
     {
@@ -1201,9 +1276,9 @@
     }
   ],
   "counts": {
-    "documents": 1431,
-    "matched": 43,
-    "active": 34,
+    "documents": 1445,
+    "matched": 46,
+    "active": 36,
     "activeForced": 4
   },
   "warnings": []

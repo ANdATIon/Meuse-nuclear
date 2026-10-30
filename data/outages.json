@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 1134,
+      "documents": 1141,
       "matched": 10
     },
     "BE": {
@@ -114,7 +114,7 @@
         "tihange",
         "doel"
       ],
-      "documents": 311,
+      "documents": 313,
       "matched": 36
     }
   },
@@ -122,7 +122,7 @@
   "to": "2026-11-07",
   "fromTs": 1790726400000,
   "toTs": 1794009600000,
-  "fetchedAt": 1793366594984,
+  "fetchedAt": 1793385965457,
   "notices": [
     {
       "id": "PK6y4psB_8-lNI3i0tI6Xw",
@@ -876,7 +876,7 @@
     },
     {
       "id": "N5Jj5ZcayWZ3kLX1XG4COg",
-      "revision": 45,
+      "revision": 46,
       "status": "active",
       "statusCode": "A05",
       "kind": "planned",
@@ -895,8 +895,8 @@
       "installedMW": 1500.0,
       "availableMW": 0.0,
       "start": 1783719900000,
-      "end": 1793404800000,
-      "created": 1792762299000,
+      "end": 1793444400000,
+      "created": 1793366978000,
       "docType": "A80"
     },
     {
@@ -1276,7 +1276,7 @@
     }
   ],
   "counts": {
-    "documents": 1445,
+    "documents": 1454,
     "matched": 46,
     "active": 36,
     "activeForced": 4

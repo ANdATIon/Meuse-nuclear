@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 1093,
+      "documents": 1100,
       "matched": 10
     },
     "BE": {
@@ -114,15 +114,15 @@
         "tihange",
         "doel"
       ],
-      "documents": 308,
-      "matched": 36
+      "documents": 310,
+      "matched": 38
     }
   },
   "from": "2026-10-01",
   "to": "2026-11-08",
   "fromTs": 1790812800000,
   "toTs": 1794096000000,
-  "fetchedAt": 1793411964222,
+  "fetchedAt": 1793434209927,
   "notices": [
     {
       "id": "PK6y4psB_8-lNI3i0tI6Xw",
@@ -172,6 +172,31 @@
       "start": 1793559600000,
       "end": 1793709000000,
       "created": 1792592891000,
+      "docType": "A80"
+    },
+    {
+      "id": "ux1IhmkDrWmx7IBRSt5u2Q",
+      "revision": 1,
+      "status": "active",
+      "statusCode": "A05",
+      "kind": "planned",
+      "businessType": "A53",
+      "reasonCode": "A95",
+      "reason": "complementary information",
+      "reasonText": "Planned maintenance",
+      "comment": null,
+      "unitKey": "doel4",
+      "unitName": "DOEL 4",
+      "unitLabel": "Doel 4",
+      "plantKey": "doel",
+      "plantLabel": "Doel",
+      "zoneKey": "BE",
+      "eic": "22WDOELX40000793",
+      "installedMW": 1026.0,
+      "availableMW": 0.0,
+      "start": 1793426400000,
+      "end": 1793552400000,
+      "created": 1793422520000,
       "docType": "A80"
     },
     {
@@ -397,6 +422,31 @@
       "start": 1792972800000,
       "end": 1793012400000,
       "created": 1792975597000,
+      "docType": "A80"
+    },
+    {
+      "id": "nR1CVsDyc6koa3jQLP8lkw",
+      "revision": 1,
+      "status": "active",
+      "statusCode": "A05",
+      "kind": "planned",
+      "businessType": "A53",
+      "reasonCode": "A95",
+      "reason": "complementary information",
+      "reasonText": "Planned maintenance",
+      "comment": null,
+      "unitKey": "doel4",
+      "unitName": "DOEL 4",
+      "unitLabel": "Doel 4",
+      "plantKey": "doel",
+      "plantLabel": "Doel",
+      "zoneKey": "BE",
+      "eic": "22WDOELX40000793",
+      "installedMW": 1026.0,
+      "availableMW": 0.0,
+      "start": 1792854000000,
+      "end": 1793426400000,
+      "created": 1793422520000,
       "docType": "A80"
     },
     {
@@ -1276,9 +1326,9 @@
     }
   ],
   "counts": {
-    "documents": 1401,
-    "matched": 46,
-    "active": 36,
+    "documents": 1410,
+    "matched": 48,
+    "active": 38,
     "activeForced": 4
   },
   "warnings": []

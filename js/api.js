@@ -104,6 +104,7 @@ function entsoeWindow() {
 }
 
 function entsoeStaticFallback(path) {
+  if (path.startsWith('/api/entsoe/plants')) return './data/plants.json';
   if (path.startsWith('/api/entsoe/generation')) return './data/generation.json';
   if (path.startsWith('/api/entsoe/outages')) return './data/outages.json';
   if (path.startsWith('/api/entsoe/be-nuclear')) return './data/be-nuclear.json';

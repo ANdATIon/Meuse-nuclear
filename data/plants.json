@@ -1,0 +1,127 @@
+{
+  "ok": true,
+  "plants": [
+    {
+      "key": "chooz",
+      "label": "Chooz",
+      "country": "FR",
+      "countryLabel": "Fransa",
+      "order": 1,
+      "zone": {
+        "key": "FR",
+        "eic": "10YFR-RTE------C"
+      },
+      "units": [
+        {
+          "key": "chooz1",
+          "label": "Chooz B1",
+          "names": [
+            "CHOOZ1"
+          ],
+          "eic": null,
+          "overviewOrder": 1
+        },
+        {
+          "key": "chooz2",
+          "label": "Chooz B2",
+          "names": [
+            "CHOOZ2"
+          ],
+          "eic": null,
+          "overviewOrder": 2
+        }
+      ],
+      "river": {
+        "label": "Meuse – Chooz",
+        "stations": [
+          {
+            "code": "B720000001",
+            "name": "Trou du Diable (DREAL)"
+          },
+          {
+            "code": "B720000002",
+            "name": "Île Graviat"
+          }
+        ]
+      }
+    },
+    {
+      "key": "tihange",
+      "label": "Tihange",
+      "country": "BE",
+      "countryLabel": "Belçika",
+      "order": 2,
+      "zone": {
+        "key": "BE",
+        "eic": "10YBE----------2"
+      },
+      "units": [
+        {
+          "key": "tihange3",
+          "label": "Tihange 3",
+          "names": [
+            "TIHANGE3"
+          ],
+          "eic": null,
+          "overviewOrder": 4
+        }
+      ],
+      "river": null
+    },
+    {
+      "key": "doel",
+      "label": "Doel",
+      "country": "BE",
+      "countryLabel": "Belçika",
+      "order": 3,
+      "zone": {
+        "key": "BE",
+        "eic": "10YBE----------2"
+      },
+      "units": [
+        {
+          "key": "doel4",
+          "label": "Doel 4",
+          "names": [
+            "DOEL4"
+          ],
+          "eic": null,
+          "overviewOrder": 3
+        }
+      ],
+      "river": null
+    }
+  ],
+  "zones": [
+    {
+      "key": "FR",
+      "eic": "10YFR-RTE------C",
+      "plants": [
+        "chooz"
+      ],
+      "units": [
+        "chooz1",
+        "chooz2"
+      ]
+    },
+    {
+      "key": "BE",
+      "eic": "10YBE----------2",
+      "plants": [
+        "tihange",
+        "doel"
+      ],
+      "units": [
+        "tihange3",
+        "doel4"
+      ]
+    }
+  ],
+  "overviewOrder": [
+    "chooz1",
+    "chooz2",
+    "doel4",
+    "tihange3"
+  ],
+  "now": null
+}

@@ -81,6 +81,17 @@ def main():
     out_file.write_text(json.dumps(out_payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Wrote {out_file}")
 
+    # Plant & station config
+    print("Writing plant configuration...")
+    try:
+        _, plants_payload = server.handle_plants({})
+        plants_payload["now"] = None
+        plants_file = data_dir / "plants.json"
+        plants_file.write_text(json.dumps(plants_payload, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"Wrote {plants_file}")
+    except Exception as err:
+        print(f"Warning: Failed writing plants.json: {err}", file=sys.stderr)
+
     # Belgium aggregated nuclear series (A75)
     print("Fetching Belgium nuclear series (A75)...")
     try:

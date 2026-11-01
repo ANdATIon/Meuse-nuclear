@@ -270,6 +270,8 @@
 
   .chart-box{position:relative;height:270px}
   .card.wide .chart-box{height:300px}
+  #qCard{grid-column:1/-1}
+  #qCard .chart-box{height:405px}
 
   canvas{display:block;width:100% !important;height:100% !important}
 
@@ -604,6 +606,7 @@
     /* Readable chart dimensions */
     .chart-box{height:250px;min-height:220px}
     .card.wide .chart-box{height:260px}
+    #qCard .chart-box{height:350px}
 
     /* Header and toolbars */
     h1{font-size:1.1rem}

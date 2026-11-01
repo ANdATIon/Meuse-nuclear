@@ -44,18 +44,20 @@ const thresholdPlugin = {
 
     const ctx = chart.ctx;
     ctx.save();
-    ctx.font = '600 10px "JetBrains Mono", monospace';
+    ctx.font = '500 9.5px "JetBrains Mono", monospace';
     ctx.textBaseline = 'middle';
 
     for (const line of opts.lines) {
       const y = yScale.getPixelForValue(line.value);
       if (!Number.isFinite(y) || y < area.top - 1 || y > area.bottom + 1) continue;
 
-      // Kesikli eşik çizgisi --warn
+      // 22 m³/s yellow dashed, 20 m³/s red dashed, thinner (1px)
+      const color = line.value >= 21 ? '#fbbf24' : '#f87171';
+
       ctx.beginPath();
       ctx.setLineDash([4, 4]);
-      ctx.lineWidth = 1.5;
-      ctx.strokeStyle = '#D29922';
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = color;
       ctx.moveTo(area.left, y);
       ctx.lineTo(area.right, y);
       ctx.stroke();
@@ -63,23 +65,13 @@ const thresholdPlugin = {
 
       if (!line.showLabel) continue;
 
-      // Sağ üst/köşede küçük etiket
-      const padX = 5;
-      const labelH = 15;
-      const boxW = ctx.measureText(line.label).width + padX * 2;
-      const boxX = area.right - boxW - 4;
-      let boxY = line.labelOffset === 'below' ? y + 3 : y - labelH - 3;
-      boxY = Math.max(area.top + 2, Math.min(boxY, area.bottom - labelH - 2));
+      // Sol tarafta küçük, kutu çerçevesiz etiket (sağdaki son değer etiketleriyle çakışmaz)
+      let textY = line.labelOffset === 'below' ? y + 8 : y - 8;
+      textY = Math.max(area.top + 6, Math.min(textY, area.bottom - 6));
 
-      roundRectPath(ctx, boxX, boxY, boxW, labelH, 2);
-      ctx.fillStyle = '#0B0F14';
-      ctx.fill();
-      ctx.strokeStyle = '#D29922';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-
-      ctx.fillStyle = '#D29922';
-      ctx.fillText(line.label, boxX + padX, boxY + labelH / 2 + 0.5);
+      ctx.fillStyle = color;
+      ctx.textAlign = 'left';
+      ctx.fillText(line.label, area.left + 6, textY);
     }
 
     ctx.restore();
@@ -98,6 +90,7 @@ const lastValueLabelPlugin = {
     ctx.font = '600 10px "JetBrains Mono", monospace';
     ctx.textBaseline = 'middle';
 
+    const items = [];
     meta.forEach((m) => {
       const ds = chart.data.datasets[m.index];
       if (!ds || ds.hidden || !m.data || !m.data.length) return;
@@ -127,15 +120,45 @@ const lastValueLabelPlugin = {
       }
       let ly = Math.max(area.top + 7, Math.min(lastPoint.y, area.bottom - 7));
 
-      roundRectPath(ctx, lx, ly - 7, textW + pad * 2, 14, 2);
+      items.push({
+        text,
+        textW,
+        pad,
+        lx,
+        ly,
+        color: ds.borderColor || '#E6EDF3'
+      });
+    });
+
+    if (!items.length) {
+      ctx.restore();
+      return;
+    }
+
+    // Son değer etiketleri çakışmasın: 14px'den yakın olanları dikeyde kaydır
+    items.sort((a, b) => a.ly - b.ly);
+    const minDistance = 14;
+    for (let pass = 0; pass < 3; pass++) {
+      for (let i = 1; i < items.length; i++) {
+        const diff = items[i].ly - items[i - 1].ly;
+        if (diff < minDistance) {
+          const shift = (minDistance - diff) / 2;
+          items[i - 1].ly = Math.max(area.top + 7, items[i - 1].ly - shift);
+          items[i].ly = Math.min(area.bottom - 7, items[i].ly + shift);
+        }
+      }
+    }
+
+    items.forEach((item) => {
+      roundRectPath(ctx, item.lx, item.ly - 7, item.textW + item.pad * 2, 14, 2);
       ctx.fillStyle = '#0F151C';
       ctx.fill();
       ctx.strokeStyle = '#1F2933';
       ctx.lineWidth = 1;
       ctx.stroke();
 
-      ctx.fillStyle = ds.borderColor || '#E6EDF3';
-      ctx.fillText(text, lx + pad, ly + 0.5);
+      ctx.fillStyle = item.color;
+      ctx.fillText(item.text, item.lx + item.pad, item.ly + 0.5);
     });
 
     ctx.restore();
@@ -158,7 +181,8 @@ const zeroLinePlugin = {
     const ctx = chart.ctx;
     ctx.save();
     ctx.beginPath();
-    ctx.lineWidth = 1.2;
+    ctx.setLineDash([]);
+    ctx.lineWidth = 1;
     ctx.strokeStyle = 'rgba(226,232,240,.62)';
     ctx.moveTo(area.left, y);
     ctx.lineTo(area.right, y);
@@ -281,20 +305,25 @@ function buildChart(canvasId, opts) {
             }
           }
         },
-        y: {
-          suggestedMax: opts.suggestedMax,
-          grid: { color: '#1F2933', drawTicks: false },
-          border: { display: false },
-          ticks: {
-            color: '#6E7681',
-            padding: 8,
-            font: { size: 10, family: 'JetBrains Mono' },
-            maxTicksLimit: 6,
-            callback: (value) => opts.yFormat(value)
-          }
-        }
+        y: Object.assign(
+          {
+            suggestedMax: opts.suggestedMax,
+            grid: { color: '#1F2933', drawTicks: false },
+            border: { display: false },
+            ticks: {
+              color: '#6E7681',
+              padding: 8,
+              font: { size: 10, family: 'JetBrains Mono' },
+              maxTicksLimit: 6,
+              callback: (value) => opts.yFormat(value)
+            }
+          },
+          opts.min !== undefined ? { min: opts.min } : {},
+          opts.beginAtZero !== undefined ? { beginAtZero: opts.beginAtZero } : {}
+        )
       }
-    }
+    },
+    plugins: opts.extraPlugins || []
   });
 }
 
@@ -315,36 +344,81 @@ function initCharts() {
     yFormat: (v) => nfTick.format(v)
   });
 
+  const qDynamicScalePlugin = {
+    id: 'qDynamicScale',
+    beforeUpdate(chart) {
+      let maxVal = 0;
+      const datasets = chart.data && chart.data.datasets;
+      if (datasets) {
+        for (let i = 0; i < datasets.length; i++) {
+          const ds = datasets[i];
+          if (ds.hidden || !ds.data) continue;
+          for (let j = 0; j < ds.data.length; j++) {
+            const pt = ds.data[j];
+            if (pt == null) continue;
+            const yVal = typeof pt === 'object' && pt !== null ? pt.y : pt;
+            if (Number.isFinite(yVal) && yVal > maxVal) {
+              maxVal = yVal;
+            }
+          }
+        }
+      }
+      const yScaleOpts = chart.options && chart.options.scales && chart.options.scales.y;
+      if (yScaleOpts) {
+        yScaleOpts.min = 0;
+        yScaleOpts.beginAtZero = true;
+        if (maxVal > 0) {
+          // max = max(data) rounded up to next 10 (en az 30 m³/s ki 22 ve 20 eşikleri rahatça görünsün)
+          const targetMax = Math.max(30, Math.ceil(maxVal / 10) * 10);
+          yScaleOpts.max = targetMax;
+          if (chart.scales && chart.scales.y) {
+            chart.scales.y.options.min = 0;
+            chart.scales.y.options.beginAtZero = true;
+            chart.scales.y.options.max = targetMax;
+          }
+        }
+      }
+    }
+  };
+
   charts.q = buildChart('qChart', {
     label: 'Debi (ham)',
-    color: '#39C5CF',
+    color: 'rgba(57, 197, 207, 0.8)',
     unit: 'm³/s',
     tension: 0.22,
     maxTicks: 7,
     legend: true,
     thresholds: true,
-    suggestedMax: CONFIG.thresholds.twoUnits.value * 1.1,
+    min: 0,
+    beginAtZero: true,
+    extraPlugins: [qDynamicScalePlugin],
     tickFormat: (v) => fmtDDMM.format(new Date(v)),
     titleFormat: (v) => fmtFull.format(new Date(v)),
     valueFormat: (v) => nfQ.format(v),
     yFormat: (v) => nfTick.format(v)
   });
 
-  // Q grafiğine ikinci seri: 12 günlük hareketli ortalama
+  // Ham seri: cyan 1.5px, %80 opaklık, ortalama çizgisinin altında
+  charts.q.data.datasets[0].borderColor = 'rgba(57, 197, 207, 0.8)';
+  charts.q.data.datasets[0].borderWidth = 1.5;
+  charts.q.data.datasets[0].order = 2;
+
+  // Q grafiğine ikinci seri: 12 günlük hareketli ortalama — solid turuncu, 2px, ham debinin üstünde
   charts.q.data.datasets.push({
     label: CONFIG.rolling.windowDays + ' günlük ortalama',
     data: [],
-    borderColor: '#D29922',
-    borderWidth: 1.5,
+    borderColor: '#f97316',
+    borderWidth: 2,
     backgroundColor: 'transparent',
     fill: false,
     tension: 0.3,
     pointRadius: 0,
     pointHoverRadius: 4,
-    pointHoverBackgroundColor: '#D29922',
+    pointHoverBackgroundColor: '#f97316',
     pointHoverBorderColor: '#0F151C',
     pointHoverBorderWidth: 1.5,
-    spanGaps: false
+    spanGaps: false,
+    order: 1
   });
 
   charts.d = buildChart('dChart', {
@@ -377,13 +451,79 @@ function initCharts() {
   charts.cmp.data.datasets = [];
 }
 
+function getPlantNominalCapacity(plant) {
+  const units = orderedUnits(plant);
+  let sum = 0;
+  for (const u of units) {
+    if (Number.isFinite(u.nominalMW)) {
+      sum += u.nominalMW;
+    } else if (u.key === 'chooz1' || u.key === 'chooz2') {
+      sum += 1500;
+    } else if (u.key === 'doel4') {
+      sum += 1033;
+    } else if (u.key === 'tihange3') {
+      sum += 1038;
+    } else {
+      sum += 1000;
+    }
+  }
+  return sum;
+}
+
+const choozDynamicMinPlugin = {
+  id: 'choozDynamicMin',
+  beforeUpdate(chart) {
+    let lowest = 0;
+    const datasets = chart.data && chart.data.datasets;
+    if (datasets) {
+      for (let i = 0; i < datasets.length; i++) {
+        const ds = datasets[i];
+        if (ds.hidden || !ds.data) continue;
+        for (let j = 0; j < ds.data.length; j++) {
+          const pt = ds.data[j];
+          if (pt == null) continue;
+          const yVal = typeof pt === 'object' && pt !== null ? pt.y : pt;
+          if (Number.isFinite(yVal) && yVal < lowest) {
+            lowest = yVal;
+          }
+        }
+      }
+    }
+    const yScaleOpts = chart.options && chart.options.scales && chart.options.scales.y;
+    if (yScaleOpts) {
+      if (lowest < 0) {
+        // min(0, lowest data value) - small padding, so negative values (grid consumption) stay visible
+        const pad = Math.max(20, Math.round(Math.abs(lowest) * 0.15));
+        const newMin = Math.floor(lowest - pad);
+        yScaleOpts.min = newMin;
+        yScaleOpts.beginAtZero = false;
+        if (chart.scales && chart.scales.y) {
+          chart.scales.y.options.min = newMin;
+          chart.scales.y.options.beginAtZero = false;
+        }
+      } else {
+        yScaleOpts.min = 0;
+        yScaleOpts.beginAtZero = true;
+        if (chart.scales && chart.scales.y) {
+          chart.scales.y.options.min = 0;
+          chart.scales.y.options.beginAtZero = true;
+        }
+      }
+    }
+  }
+};
+
 function initPlantCharts() {
   orderedPlants().forEach((plant) => {
     const canvasId = 'genChart_' + plant.key;
     if (!$(canvasId)) return;
 
+    const isChooz = plant.key === 'chooz';
     const units = orderedUnits(plant);
     const first = units[0] || { label: plant.label };
+    const plantCapacity = getPlantNominalCapacity(plant);
+    const suggestedMax = Math.round(plantCapacity * 1.1);
+
     const chart = buildChart(canvasId, {
       label: (first.label || plant.label) + ' (MW)',
       color: unitColor(plant, 0),
@@ -393,7 +533,10 @@ function initPlantCharts() {
       legend: units.length > 1,
       legendPosition: 'bottom',
       zeroLine: true,
-      suggestedMax: 1600,
+      min: isChooz ? undefined : 0,
+      beginAtZero: isChooz ? undefined : true,
+      suggestedMax: suggestedMax,
+      extraPlugins: isChooz ? [choozDynamicMinPlugin] : [],
       tickFormat: (v) => fmtDDMM.format(new Date(v)),
       titleFormat: (v) => fmtFull.format(new Date(v)),
       valueFormat: (v) => nfMW.format(v),
@@ -438,6 +581,11 @@ function initBeNuclearChart() {
   if (charts.beNuclear) {
     try { charts.beNuclear.destroy(); } catch (e) {}
   }
+  const beCapacity = (CONFIG.entsoe && CONFIG.entsoe.belgianUnits
+    ? CONFIG.entsoe.belgianUnits.reduce((acc, u) => acc + (u.nominalMW || 0), 0)
+    : 0) || (1033 + 1038);
+  const suggestedMax = Math.round(beCapacity * 1.1);
+
   charts.beNuclear = buildChart(canvasId, {
     label: 'Belçika nükleer toplamı (MW)',
     color: '#58A6FF',
@@ -446,7 +594,9 @@ function initBeNuclearChart() {
     maxTicks: 8,
     legend: false,
     zeroLine: true,
-    suggestedMax: 2100,
+    min: 0,
+    beginAtZero: true,
+    suggestedMax: suggestedMax,
     tickFormat: (v) => fmtDDMM.format(new Date(v)),
     titleFormat: (v) => fmtFull.format(new Date(v)),
     valueFormat: (v) => nfMW.format(v),

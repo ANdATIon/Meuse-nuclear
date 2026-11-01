@@ -831,7 +831,12 @@ function renderReactors() {
       ? 'üretim verisi yok'
       : nfMW.format(displayMW) + ' <span class="unit">MW net</span>';
     let availHtml = '—';
-    if (snap.availableMW != null) {
+    if (snap.scheduledMW != null) {
+      availHtml = nfMW.format(snap.scheduledMW) + '<small>MW</small>';
+      if (snap.nextStepText) {
+        availHtml += ' <span class="reactor-plan" style="font-size:10px;font-weight:normal;color:var(--muted,#6E7681);margin-left:4px">(' + esc(snap.nextStepText) + ')</span>';
+      }
+    } else if (snap.availableMW != null) {
       availHtml = nfMW.format(snap.availableMW) + '<small>MW</small>';
     } else if (snap.installedMW != null) {
       availHtml = nfMW.format(snap.installedMW) + '<small>MW kurulu</small>';

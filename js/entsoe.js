@@ -238,6 +238,128 @@ async function loadEntsoe(opts) {
 /* ------------------------------------------------------------------
    Belçika atribyüsiyon mantığı: A75 canlı toplam + gecikmeli A73 + bildirimler
    ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   Kesinti ve Rampa Bildirimleri (A77/A80/A95) zaman serisi analizi
+   ------------------------------------------------------------------ */
+function getNoticeAvailableMW(notice, now) {
+  if (!notice) return null;
+  const schedule = notice.schedule;
+  if (!schedule || !schedule.length) {
+    return Number.isFinite(notice.availableMW) ? notice.availableMW : null;
+  }
+  if (now < schedule[0].t) {
+    return schedule[0].mw;
+  }
+  let currentMW = schedule[0].mw;
+  for (let i = 0; i < schedule.length; i++) {
+    if (schedule[i].t <= now) {
+      currentMW = schedule[i].mw;
+    } else {
+      break;
+    }
+  }
+  return currentMW;
+}
+
+function getNoticeNextStep(notice, now) {
+  if (!notice) return null;
+  const schedule = notice.schedule;
+  if (!schedule || !schedule.length) return null;
+  const currentMW = getNoticeAvailableMW(notice, now);
+  for (let i = 0; i < schedule.length; i++) {
+    const pt = schedule[i];
+    if (pt.t > now && Math.abs(pt.mw - (currentMW != null ? currentMW : 0)) >= 0.5) {
+      const timeStr = fmtHM.format(new Date(pt.t));
+      return "plan: " + timeStr + "'de " + nfMW.format(pt.mw) + " MW";
+    }
+  }
+  return null;
+}
+
+function classifyNotice(notice, nominal) {
+  if (!notice) return "outage";
+  const nom = nominal || notice.installedMW || 1000;
+  const schedule = notice.schedule || [];
+  const text = ((notice.reasonText || "") + " " + (notice.comment || "") + " " + (notice.reason || "")).toLowerCase();
+
+  if (!schedule.length) {
+    const mw = notice.availableMW;
+    if (mw == null || mw <= 50) return "outage";
+    if (mw < nom * 0.9) return "restriction";
+    if (/ramp|start|redémarr|reprise|step-up|montee|montée|power increase|increase/i.test(text)) return "ramp_up";
+    if (/reduc|réduc|kısıt|baisse|curtail|power reduction|decrease/i.test(text)) return "ramp_down";
+    return "outage";
+  }
+
+  const values = schedule.map(p => p.mw);
+  const minVal = Math.min.apply(null, values);
+  const maxVal = Math.max.apply(null, values);
+  const firstVal = values[0];
+  const lastVal = values[values.length - 1];
+
+  // outage: flat at ~0
+  if (maxVal <= 50) {
+    return "outage";
+  }
+
+  // restriction: flat at a constant value between 0 and nominal
+  if (maxVal - minVal <= 50 && minVal > 50 && maxVal < nom * 0.9) {
+    return "restriction";
+  }
+
+  // Check monotonicity
+  let nonDec = 0;
+  let nonInc = 0;
+  for (let i = 1; i < values.length; i++) {
+    if (values[i] >= values[i - 1] - 5) nonDec++;
+    if (values[i] <= values[i - 1] + 5) nonInc++;
+  }
+  const isMostlyNonDecreasing = nonDec >= (values.length - 1) * 0.65;
+  const isMostlyNonIncreasing = nonInc >= (values.length - 1) * 0.65;
+
+  const startsLow = firstVal <= nom * 0.5;
+  const endsNearNominal = lastVal >= nom * 0.88 || maxVal >= nom * 0.88;
+  const endsClearlyLower = lastVal <= firstVal - 100;
+
+  // ramp_up: values mostly non-decreasing, start low, end >= ~90% of nominal
+  if (isMostlyNonDecreasing && startsLow && endsNearNominal) {
+    return "ramp_up";
+  }
+
+  // ramp_down: values mostly non-increasing, end clearly lower than start
+  if (isMostlyNonIncreasing && endsClearlyLower) {
+    return "ramp_down";
+  }
+
+  if (startsLow && endsNearNominal) {
+    return "ramp_up";
+  }
+  if (endsClearlyLower) {
+    return "ramp_down";
+  }
+
+  // Flat at a constant value between 0 and nominal
+  if (maxVal - minVal <= 80 && minVal > 50 && maxVal < nom * 0.9) {
+    return "restriction";
+  }
+
+  // Tie-breaker: reason/description text
+  if (/ramp|start|redémarr|reprise|step-up|montee|montée|power increase|increase/i.test(text)) {
+    return "ramp_up";
+  }
+  if (/reduc|réduc|baisse|curtail|power reduction|decrease/i.test(text)) {
+    return "ramp_down";
+  }
+  if (/kısıt|restriction|limit/i.test(text)) {
+    return "restriction";
+  }
+
+  if (lastVal > firstVal) return "ramp_up";
+  if (lastVal < firstVal) return "ramp_down";
+
+  return "outage";
+}
+
 function computeBelgiumAttribution(gen, beTotal, out) {
   try {
     const beUnits = (CONFIG.entsoe && CONFIG.entsoe.belgianUnits) || [
@@ -277,7 +399,7 @@ function computeBelgiumAttribution(gen, beTotal, out) {
     const d4A73 = getUnitLastA73('doel4');
     const t3A73 = getUnitLastA73('tihange3');
 
-    // Active, not cancelled, not superseded A77/A80 outage notices
+    // Active, not cancelled, not superseded A77/A80/A95 outage notices
     const notices = (out && out.notices) || [];
     const beNotices = notices.filter(n =>
       n.zoneKey === "BE" &&
@@ -286,50 +408,45 @@ function computeBelgiumAttribution(gen, beTotal, out) {
       Number.isFinite(n.start) && Number.isFinite(n.end)
     );
 
-    // Latest notice per unit (not superseded)
-    const latestNoticePerUnit = {};
-    for (const n of beNotices) {
-      const existing = latestNoticePerUnit[n.unitKey];
-      if (!existing || (n.created || 0) > (existing.created || 0)) {
-        latestNoticePerUnit[n.unitKey] = n;
-      }
-    }
+    const isCovering = (n) => n && n.start <= now && n.end > now;
 
-    const d4Notice = latestNoticePerUnit['doel4'];
-    const t3Notice = latestNoticePerUnit['tihange3'];
+    const getActiveCoveringNotice = (key) => {
+      const cov = beNotices.filter(n => n.unitKey === key && isCovering(n));
+      cov.sort((a, b) => (b.created || 0) - (a.created || 0) || (b.revision || 0) - (a.revision || 0));
+      return cov[0] || null;
+    };
+
+    const getLatestNotice = (key) => {
+      const all = beNotices.filter(n => n.unitKey === key);
+      all.sort((a, b) => (b.created || 0) - (a.created || 0) || (b.revision || 0) - (a.revision || 0));
+      return all[0] || null;
+    };
+
+    const d4Covering = getActiveCoveringNotice('doel4');
+    const t3Covering = getActiveCoveringNotice('tihange3');
+    const d4Notice = d4Covering || getLatestNotice('doel4');
+    const t3Notice = t3Covering || getLatestNotice('tihange3');
+
+    const d4Class = d4Covering ? classifyNotice(d4Covering, d4Nominal) : (d4Notice ? classifyNotice(d4Notice, d4Nominal) : null);
+    const t3Class = t3Covering ? classifyNotice(t3Covering, t3Nominal) : (t3Notice ? classifyNotice(t3Notice, t3Nominal) : null);
+
+    const d4Sched = d4Covering ? getNoticeAvailableMW(d4Covering, now) : (d4Notice ? getNoticeAvailableMW(d4Notice, now) : null);
+    const t3Sched = t3Covering ? getNoticeAvailableMW(t3Covering, now) : (t3Notice ? getNoticeAvailableMW(t3Notice, now) : null);
+
+    const isPartialClass = (cls) => cls === "ramp_up" || cls === "ramp_down" || cls === "restriction";
+    const classToNote = (cls) => cls === "ramp_up" ? "güç artırımında" : cls === "ramp_down" ? "güç azaltımında" : "kısıtlı";
+
+    const d4IsPartial = d4Covering && isPartialClass(d4Class);
+    const t3IsPartial = t3Covering && isPartialClass(t3Class);
 
     const attribution = {};
     let reasoning = [];
     let uncertain = false;
 
-    // Helper: is active outage notice with available 0 covering current time?
-    const isActiveZeroOutage = (n) =>
-      n && n.start <= now && n.end > now && n.availableMW != null && n.availableMW <= 50;
-
-    // Helper: does notice indicate ramp-up / startup / maintenance-return / power-reduction?
-    const hasRampOrReductionNotice = (n) => {
-      if (!n) return false;
-      if (n.availableMW != null && n.availableMW > 50 && n.availableMW < 1000) return true;
-      const txt = ((n.reasonText || '') + ' ' + (n.comment || '') + ' ' + (n.reason || '')).toLowerCase();
-      return /ramp|start|redémarr|reprise|step|essai|test|kısıt|reduc|réduc|curtail|baisse|maint|bakım/i.test(txt);
-    };
-
-    const getPartialNote = (key, partialMW, notice, lastA73, nominalMW) => {
-      const txt = ((notice && ((notice.reasonText || '') + ' ' + (notice.comment || '') + ' ' + (notice.reason || ''))) || '').toLowerCase();
-      if (/reduc|réduc|kısıt|baisse|curtail|limit/i.test(txt)) {
-        return 'güç azaltımında';
-      }
-      if (/ramp|start|redémarr|reprise|step-up|montee|montée|return|retour/i.test(txt)) {
-        return 'güç artırımında';
-      }
-      if (notice && (notice.availableMW <= 50 || /maint|bakım|entretien/i.test(txt))) {
-        return 'güç artırımında';
-      }
-      if (lastA73) {
-        if (lastA73.genMW <= 100 || !lastA73.producing) return 'güç artırımında';
-        if (lastA73.genMW >= nominalMW * 0.9) return 'güç azaltımında';
-      }
-      return 'güç artırımında';
+    const isActiveZeroOutage = (n) => {
+      if (!n || n.start > now || n.end <= now) return false;
+      const mw = getNoticeAvailableMW(n, now);
+      return mw != null && mw <= 50;
     };
 
     // 1. total >= D4 + T3 - tol -> both = nominal.
@@ -354,7 +471,70 @@ function computeBelgiumAttribution(gen, beTotal, out) {
       };
       reasoning.push(`Toplam (${nfMW.format(totalMW)} MW) tam kapasiteye yakın; her iki ünite nominal.`);
     }
-    // 2. total <= one unit nominal + tol (single-unit range):
+    // 2. Bir ünitede aktif rampa/kısıt bildirimi varsa -> kısmi ünite o bildirimdeki geçerli değer
+    else if (d4IsPartial && !t3IsPartial) {
+      const cardNote = classToNote(d4Class);
+      let partialMW = d4Sched != null ? d4Sched : Math.max(0, totalMW - t3Nominal);
+      partialMW = Math.max(0, Math.min(totalMW, Math.min(d4Nominal, partialMW)));
+      let fullMW = Math.max(0, Math.min(t3Nominal, totalMW - partialMW));
+      if (partialMW + fullMW < totalMW && fullMW >= t3Nominal) {
+        partialMW = Math.min(d4Nominal, Math.max(0, Math.round(totalMW - fullMW)));
+      }
+      partialMW = Math.round(partialMW);
+      fullMW = Math.round(fullMW);
+
+      attribution['doel4'] = {
+        running: partialMW > 50,
+        estimatedMW: partialMW,
+        confidence: 'high',
+        reason: 'partial_notice',
+        unitLabel: d4Def.label,
+        notice: d4Covering,
+        partialNote: cardNote
+      };
+      attribution['tihange3'] = {
+        running: true,
+        estimatedMW: fullMW,
+        confidence: 'high',
+        reason: 'nominal',
+        unitLabel: t3Def.label,
+        notice: t3Notice,
+        partialNote: null
+      };
+      reasoning.push(`${d4Def.label} aktif ${cardNote} (${nfMW.format(partialMW)} MW); ${t3Def.label} nominal (${nfMW.format(fullMW)} MW).`);
+    }
+    else if (t3IsPartial && !d4IsPartial) {
+      const cardNote = classToNote(t3Class);
+      let partialMW = t3Sched != null ? t3Sched : Math.max(0, totalMW - d4Nominal);
+      partialMW = Math.max(0, Math.min(totalMW, Math.min(t3Nominal, partialMW)));
+      let fullMW = Math.max(0, Math.min(d4Nominal, totalMW - partialMW));
+      if (partialMW + fullMW < totalMW && fullMW >= d4Nominal) {
+        partialMW = Math.min(t3Nominal, Math.max(0, Math.round(totalMW - fullMW)));
+      }
+      partialMW = Math.round(partialMW);
+      fullMW = Math.round(fullMW);
+
+      attribution['tihange3'] = {
+        running: partialMW > 50,
+        estimatedMW: partialMW,
+        confidence: 'high',
+        reason: 'partial_notice',
+        unitLabel: t3Def.label,
+        notice: t3Covering,
+        partialNote: cardNote
+      };
+      attribution['doel4'] = {
+        running: true,
+        estimatedMW: fullMW,
+        confidence: 'high',
+        reason: 'nominal',
+        unitLabel: d4Def.label,
+        notice: d4Notice,
+        partialNote: null
+      };
+      reasoning.push(`${t3Def.label} aktif ${cardNote} (${nfMW.format(partialMW)} MW); ${d4Def.label} nominal (${nfMW.format(fullMW)} MW).`);
+    }
+    // 3. Tek ünite aralığı (total <= singleUnitLimit)
     else if (totalMW <= singleUnitLimit) {
       const d4Zero = isActiveZeroOutage(d4Notice);
       const t3Zero = isActiveZeroOutage(t3Notice);
@@ -362,23 +542,19 @@ function computeBelgiumAttribution(gen, beTotal, out) {
       let activeUnitKey = null;
       let zeroUnitKey = null;
 
-      // - The unit with an active outage notice (available 0) = 0; other = total.
       if (d4Zero && !t3Zero) {
         zeroUnitKey = 'doel4';
         activeUnitKey = 'tihange3';
       } else if (t3Zero && !d4Zero) {
         zeroUnitKey = 'tihange3';
         activeUnitKey = 'doel4';
-      }
-      // - If no notice: the unit that was producing in the last A73 data = total, other = 0.
-      else if (d4A73 && t3A73 && d4A73.producing && !t3A73.producing) {
+      } else if (d4A73 && t3A73 && d4A73.producing && !t3A73.producing) {
         activeUnitKey = 'doel4';
         zeroUnitKey = 'tihange3';
       } else if (d4A73 && t3A73 && t3A73.producing && !d4A73.producing) {
         activeUnitKey = 'tihange3';
         zeroUnitKey = 'doel4';
       } else {
-        // Fallback: compare last gen MW
         const d4Last = d4A73 ? (d4A73.genMW || 0) : 0;
         const t3Last = t3A73 ? (t3A73.genMW || 0) : 0;
         if (d4Last > t3Last) {
@@ -437,25 +613,12 @@ function computeBelgiumAttribution(gen, beTotal, out) {
         reasoning.push(`${zeroUnitKey === 'doel4' ? d4Def.label : t3Def.label} kapalı (0 MW); ${activeUnitKey === 'doel4' ? d4Def.label : t3Def.label} = ${nfMW.format(estTotal)} MW.`);
       }
     }
-    // 3. Between (total > one nominal + tol and < sum - tol) -> both are running, one is ramping/reduced.
-    // IMPORTANT: total is the truth; ignore "available 0" on notices here - they may be ending (e.g. return from maintenance).
+    // 4. İki ünite arası durum: A73 veya oransal paylaşım
     else {
-      const d4NoticeHit = hasRampOrReductionNotice(d4Notice);
-      const t3NoticeHit = hasRampOrReductionNotice(t3Notice);
-
       let partialKey = null;
       let fullKey = null;
 
-      // - Partial unit = the one with a recent/active ramp-up, startup, maintenance-return or power-reduction notice (not cancelled, not superseded).
-      if (d4NoticeHit && !t3NoticeHit) {
-        partialKey = 'doel4';
-        fullKey = 'tihange3';
-      } else if (t3NoticeHit && !d4NoticeHit) {
-        partialKey = 'tihange3';
-        fullKey = 'doel4';
-      }
-      // - If both or neither have notices -> partial = the one that was offline/lower in the last A73 data.
-      else if (d4A73 && t3A73) {
+      if (d4A73 && t3A73) {
         const d4Val = d4A73.genMW != null ? d4A73.genMW : 0;
         const t3Val = t3A73.genMW != null ? t3A73.genMW : 0;
         if (d4Val < t3Val) {
@@ -467,13 +630,10 @@ function computeBelgiumAttribution(gen, beTotal, out) {
         }
       }
 
-      // If still unclear -> split proportionally, low confidence.
       if (!partialKey || !fullKey) {
         uncertain = true;
-        const d4Avail = (d4Notice && Number.isFinite(d4Notice.availableMW) && d4Notice.availableMW > 50)
-          ? d4Notice.availableMW : d4Nominal;
-        const t3Avail = (t3Notice && Number.isFinite(t3Notice.availableMW) && t3Notice.availableMW > 50)
-          ? t3Notice.availableMW : t3Nominal;
+        const d4Avail = (d4Sched && d4Sched > 50) ? d4Sched : ((d4Notice && Number.isFinite(d4Notice.availableMW) && d4Notice.availableMW > 50) ? d4Notice.availableMW : d4Nominal);
+        const t3Avail = (t3Sched && t3Sched > 50) ? t3Sched : ((t3Notice && Number.isFinite(t3Notice.availableMW) && t3Notice.availableMW > 50) ? t3Notice.availableMW : t3Nominal);
         const sumAvail = d4Avail + t3Avail;
         const d4MW = sumAvail > 0 ? Math.round(totalMW * (d4Avail / sumAvail)) : Math.round(totalMW / 2);
         const t3MW = Math.max(0, Math.round(totalMW - d4MW));
@@ -504,8 +664,7 @@ function computeBelgiumAttribution(gen, beTotal, out) {
         const partialNominal = partialKey === 'doel4' ? d4Nominal : t3Nominal;
         const partialMW = Math.max(0, Math.round(totalMW - fullNominal));
         const partialNotice = partialKey === 'doel4' ? d4Notice : t3Notice;
-        const partialA73 = partialKey === 'doel4' ? d4A73 : t3A73;
-        const note = getPartialNote(partialKey, partialMW, partialNotice, partialA73, partialNominal);
+        const note = partialMW < partialNominal * 0.9 ? 'güç artırımında' : 'güç azaltımında';
 
         attribution[fullKey] = {
           running: true,
@@ -558,15 +717,15 @@ function computeBelgiumAttribution(gen, beTotal, out) {
    Bildirim etiketleri: A95 bilgi notu; çevresel kısıtlar bakım değildir
    ------------------------------------------------------------------ */
 function noticeIsInfo(notice) {
-  // A95 is complementary information unless its text explicitly cites an
-  // environmental constraint; those are real planned environmental outages.
-  if (String((notice && notice.reasonCode) || '').toUpperCase() !== 'A95') {
+  if (!notice) return true;
+  // Schedule veya kullanılabilir MW taşıyan bildirimler asla filtrelenmez
+  if ((notice.schedule && notice.schedule.length > 0) || Number.isFinite(notice.availableMW)) {
+    return false;
+  }
+  if (String(notice.reasonCode || '').toUpperCase() !== 'A95') {
     return false;
   }
   if (noticeIsEnvironmental(notice)) return false;
-  // Belgian A80/A77 documents use A95 for "planned maintenance/test" and
-  // carry a real availability value. Treat those as outages, not info notes.
-  if (notice.zoneKey === 'BE' && Number.isFinite(notice.availableMW)) return false;
   return true;
 }
 
@@ -655,10 +814,18 @@ function unitSnapshot(key, unit, notices, now, beAttribution) {
 
   const covering = latestNotice && latestNotice.start <= ref && latestNotice.end > ref ? [latestNotice] : [];
 
-  const availability = covering
-    .map((n) => n.availableMW)
-    .filter((v) => Number.isFinite(v));
-  const availableMW = availability.length ? Math.min.apply(null, availability) : null;
+  let availableMW = null;
+  let nextStepText = null;
+  if (covering.length && latestNotice) {
+    availableMW = getNoticeAvailableMW(latestNotice, now);
+    nextStepText = getNoticeNextStep(latestNotice, now);
+  }
+  if (availableMW == null && covering.length) {
+    const availability = covering
+      .map((n) => n.availableMW)
+      .filter((v) => Number.isFinite(v));
+    availableMW = availability.length ? Math.min.apply(null, availability) : null;
+  }
   const installedList = covering
     .map((n) => n.installedMW)
     .filter((v) => Number.isFinite(v));
@@ -760,7 +927,11 @@ function unitSnapshot(key, unit, notices, now, beAttribution) {
       bits.push("dönüş <b>" + fmtDDMMTime.format(new Date(returnAt)) + "</b>");
     }
     if (availableMW != null) {
-      bits.push("kullanılabilir <b>" + nfMW.format(availableMW) + " MW</b>");
+      let availStr = "kullanılabilir <b>" + nfMW.format(availableMW) + " MW</b>";
+      if (nextStepText) {
+        availStr += " (" + nextStepText + ")";
+      }
+      bits.push(availStr);
     }
   } else {
     const upcoming = (notices || [])
@@ -793,6 +964,8 @@ function unitSnapshot(key, unit, notices, now, beAttribution) {
     genMW,
     consMW,
     availableMW: attribution ? attribution.estimatedMW : (availableMW != null ? availableMW : null),
+    scheduledMW: availableMW,
+    nextStepText,
     installedMW,
     tone,
     label,
@@ -872,6 +1045,16 @@ function noticeIsSuperseded(notice, allNotices, now) {
 }
 
 function noticeMwText(notice) {
+  const schedule = notice.schedule;
+  if (schedule && schedule.length > 1) {
+    const now = Date.now();
+    const curr = getNoticeAvailableMW(notice, now);
+    const nextStep = getNoticeNextStep(notice, now);
+    const installed = Number.isFinite(notice.installedMW) ? notice.installedMW : null;
+    let s = (curr != null ? nfMW.format(curr) : '0') + (installed != null ? ' / ' + nfMW.format(installed) + ' MW' : ' MW');
+    if (nextStep) s += ' (' + nextStep + ')';
+    return s;
+  }
   const available = Number.isFinite(notice.availableMW) ? notice.availableMW : null;
   const installed = Number.isFinite(notice.installedMW) ? notice.installedMW : null;
 

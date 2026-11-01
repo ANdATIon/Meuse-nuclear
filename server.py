@@ -279,7 +279,7 @@ REASON_LABELS = {
     "B20": "shutdown",
 }
 
-BUSINESS_LABELS = {"A53": "planned", "A54": "forced"}
+BUSINESS_LABELS = {"A53": "planned", "A54": "forced", "A95": "info"}
 
 UNIT_NAME_PATHS = [
     "production_registeredresource.name",
@@ -1623,6 +1623,92 @@ def outage_status_code(root) -> str | None:
     return pick(meta, ["docstatus.value"])
 
 
+def parse_notice_periods(timeseries, doc_start: int | None, doc_end: int | None):
+    """
+    Parse every Available_Period in a notice timeseries:
+    start, resolution (PT15M / PT60M etc.), and all Points (position + quantity).
+    Convert each position to a real timestamp: start + (position - 1) * resolution.
+    Handle missing positions (value continues from previous point).
+    Store full schedule: [{"t": t, "mw": mw}].
+    """
+    period_objs = []
+    for child in timeseries.iter():
+        tag = local_name(child.tag)
+        if tag in ("available_period", "period"):
+            meta = collect(child)
+            p_start = parse_datetime_ms(pick(meta, ["timeinterval.start", "start"]))
+            p_end = parse_datetime_ms(pick(meta, ["timeinterval.end", "end"]))
+            res_ms = duration_ms(pick(meta, ["resolution"]))
+            raw_pts = []
+            for pt in child.iter():
+                if local_name(pt.tag) == "point":
+                    pm = collect(pt)
+                    pos = pm.get("position")
+                    qty = to_float(pm.get("quantity"))
+                    if pos is not None and qty is not None:
+                        try:
+                            raw_pts.append((int(float(pos)), qty))
+                        except ValueError:
+                            pass
+            if raw_pts or p_start is not None:
+                period_objs.append({
+                    "start": p_start,
+                    "end": p_end,
+                    "resolution": res_ms,
+                    "points": raw_pts,
+                })
+
+    if not period_objs:
+        return doc_start, doc_end, []
+
+    period_objs.sort(key=lambda p: p["start"] or 0)
+
+    schedule_map: dict[int, float] = {}
+    starts = []
+    ends = []
+
+    for period in period_objs:
+        p_start = period["start"] if period["start"] is not None else doc_start
+        p_end = period["end"]
+        res = period["resolution"]
+        pts = period["points"]
+
+        if period["start"] is not None:
+            starts.append(period["start"])
+        if p_end is not None:
+            ends.append(p_end)
+
+        if not pts:
+            continue
+
+        pts.sort(key=lambda x: x[0])
+        count = pts[-1][0] if pts else len(pts)
+
+        if res is None and p_start is not None and p_end is not None and count > 0:
+            res = max(1, (p_end - p_start) // count)
+        if res is None:
+            res = 60000
+
+        if p_start is None:
+            p_start = 0
+
+        for pos, qty in pts:
+            t = p_start + res * (pos - 1)
+            schedule_map[t] = round(float(qty), 2)
+
+    schedule = [{"t": t, "mw": mw} for t, mw in sorted(schedule_map.items())]
+
+    ts_start = min(starts) if starts else doc_start
+    ts_end = max(ends) if ends else doc_end
+
+    if ts_start is None and schedule:
+        ts_start = schedule[0]["t"]
+    if ts_end is None and schedule:
+        ts_end = schedule[-1]["t"]
+
+    return ts_start, ts_end, schedule
+
+
 def parse_outage_document(
     raw: bytes, default_type: str, notices: dict, stats: dict, zone_key: str | None = None
 ) -> None:
@@ -1682,39 +1768,21 @@ def parse_outage_document(
         kind = BUSINESS_LABELS.get(business or "", "unknown")
         nominal = to_float(pick(ts_meta, UNIT_NOMINAL_PATHS))
 
-        blocks = parse_period_blocks(timeseries, ("available_period",))
-        if not blocks:
-            blocks = parse_period_blocks(timeseries, ("period",))
+        ts_start, ts_end, schedule = parse_notice_periods(timeseries, doc_start, doc_end)
 
-        available_values = []
-        starts = []
-        ends = []
-        for block in blocks:
-            if block["start"] is not None:
-                starts.append(block["start"])
-            if block["end"] is not None:
-                ends.append(block["end"])
-            for timestamp, value in block["points"]:
-                available_values.append(value)
-                starts.append(timestamp)
-
-        ts_start = min(starts) if starts else doc_start
-        ts_end = max(ends) if ends else doc_end
-        if ts_end is None and blocks:
-            last = max(
-                (p[0] for block in blocks for p in block["points"]),
-                default=None,
-            )
-            if last is not None:
-                res = blocks[-1]["resolutionMs"] or 0
-                ts_end = last + res
-
-        if ts_start is None:
-            ts_start = doc_start
-        if ts_end is None:
-            ts_end = doc_end
-
-        available_mw = min(available_values) if available_values else None
+        now_ms = _now_ms()
+        available_mw = None
+        if schedule:
+            if now_ms < schedule[0]["t"]:
+                available_mw = schedule[0]["mw"]
+            else:
+                curr = schedule[0]["mw"]
+                for pt in schedule:
+                    if pt["t"] <= now_ms:
+                        curr = pt["mw"]
+                    else:
+                        break
+                available_mw = curr
 
         display = matched_name(names) or (names[0] if names else None)
         if not display:
@@ -1741,6 +1809,7 @@ def parse_outage_document(
             "eic": eic,
             "installedMW": nominal,
             "availableMW": available_mw,
+            "schedule": schedule,
             "start": ts_start,
             "end": ts_end,
             "created": created,

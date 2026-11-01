@@ -378,7 +378,8 @@ def cache_get(key: str):
         return item
 
 
-def cache_put(key: str, status: int, payload: dict) -> None:
+def cache_put(key: str, status: int, payload, ttl_s: int | None = None) -> None:
+    ttl = CONFIG["cache_ttl_s"] if ttl_s is None else ttl_s
     with _CACHE_LOCK:
         if len(_CACHE) >= CONFIG["cache_max_entries"]:
             # Drop the entries that expire first; keeps the cache bounded.
@@ -388,7 +389,7 @@ def cache_put(key: str, status: int, payload: dict) -> None:
             "status": status,
             "payload": payload,
             "stored": time.time(),
-            "expires": time.time() + CONFIG["cache_ttl_s"],
+            "expires": time.time() + ttl,
         }
 
 
@@ -1236,6 +1237,75 @@ def fetch_aggregated_nuclear(zone_key: str) -> dict | None:
     return None
 
 
+def fetch_be_nuclear_series() -> list[dict]:
+    """Fetch Belgium actual aggregated nuclear generation (A75) for the last 7 days.
+    Returns [{t: ISO timestamp, mw: number}] sorted ascending."""
+    now = datetime.now(timezone.utc)
+    start = now - timedelta(days=7)
+    end = now
+    raw = http_get(
+        {
+            "documentType": "A75",
+            "processType": "A16",
+            "in_Domain": "10YBE----------2",
+            "psrType": "B14",
+            "periodStart": fmt_param(start),
+            "periodEnd": fmt_param(end),
+        },
+        timeout=30,
+        attempts=2,
+    )
+    if not raw or is_no_data(raw):
+        return []
+
+    docs = extract_documents(raw)
+    points_map: dict[int, float] = {}
+
+    for doc in docs:
+        root = parse_xml(doc)
+        if root is None:
+            continue
+        for timeseries in root.iter():
+            if local_name(timeseries.tag) != "timeseries":
+                continue
+            ts_meta = collect(timeseries)
+            ts_start = parse_datetime_ms(pick(ts_meta, ["timeinterval.start", "start"]))
+            blocks = parse_period_blocks(timeseries, ("period",))
+            for block in blocks:
+                for ts_ms, mw in block["points"]:
+                    points_map[ts_ms] = round(mw, 2)
+            if not blocks:
+                for period in timeseries.iter():
+                    if local_name(period.tag) != "period":
+                        continue
+                    p_meta = collect(period)
+                    p_start = parse_datetime_ms(pick(p_meta, ["timeinterval.start", "start"])) or ts_start
+                    res = duration_ms(pick(p_meta, ["resolution"])) or duration_ms(pick(ts_meta, ["resolution"]))
+                    if not p_start or not res:
+                        continue
+                    for point in period.iter():
+                        if local_name(point.tag) != "point":
+                            continue
+                        pm = collect(point)
+                        pos = pm.get("position")
+                        qty = to_float(pm.get("quantity"))
+                        if pos is not None and qty is not None:
+                            try:
+                                p_pos = int(float(pos))
+                                pt_ms = p_start + res * (p_pos - 1)
+                                points_map[pt_ms] = round(qty, 2)
+                            except ValueError:
+                                pass
+
+    return [
+        {
+            "t": datetime.fromtimestamp(ts_ms / 1000.0, tz=timezone.utc).isoformat().replace("+00:00", "Z"),
+            "mw": mw,
+        }
+        for ts_ms, mw in sorted(points_map.items())
+    ]
+
+
 def _run_generation_job(zone_key: str, key: str) -> dict:
     try:
         return _download_generation_day(zone_key, key)
@@ -1280,8 +1350,12 @@ def _generation_day_state(zone_key: str, key: str, force: bool):
 
     future, failure = _queue_generation_day(zone_key, key)
     if record is not None:
-        # Bugün/dün tazelenirken eski veri kaybolmasın: kullanılabilir kaydı
-        # hemen döndür, yenileme arka planda sürsün.
+        if future is not None:
+            try:
+                # Tazeleme baslatildiysa guncel veriyi 4 saniyeye kadar bekle
+                return "ok", future.result(timeout=4.0)
+            except Exception:
+                pass
         return "ok", record
     if failure:
         return "missing", failure
@@ -1834,6 +1908,19 @@ def handle_aggregated_generation(params):
     return 200, payload
 
 
+def handle_be_nuclear(_params):
+    """Fetch Belgium actual aggregated nuclear generation (A75) for the last 7 days."""
+    key = "be_nuclear|v1"
+    cached = cache_get(key)
+    if cached:
+        return cached["status"], cached["payload"]
+
+    require_token()
+    series = fetch_be_nuclear_series()
+    cache_put(key, 200, series, ttl_s=600)
+    return 200, series
+
+
 def handle_outages(params):
     start, end = parse_window(
         params,
@@ -1966,6 +2053,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
             return handle_outages(params)
         if path == "/api/entsoe/aggregated-generation":
             return handle_aggregated_generation(params)
+        if path == "/api/entsoe/be-nuclear":
+            return handle_be_nuclear(params)
         raise ApiError(404, "not_found", "Bilinmeyen API yolu.")
 
     def _serve_static(self, path: str, head_only: bool):

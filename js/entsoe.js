@@ -129,6 +129,11 @@ async function pollGeneration(win, entry, token) {
       if (token !== entsoePollSeq || state.entsoe !== entry) return;
       entry.gen = next;
       entry.genError = null;
+      if (entry.beNuclearTotal) {
+        try {
+          entry.beAttribution = computeBelgiumAttribution(entry.gen, entry.beNuclearTotal, entry.out);
+        } catch (_) {}
+      }
       logGeneration(next);
       if (generationSignature(next) !== before) renderAll();
     } catch (err) {
@@ -161,14 +166,13 @@ async function loadEntsoe(opts) {
     outError: null,
     fetchedAt: Date.now(),
     beNuclearTotal: null,
-    beAttribution: null
+    beAttribution: null,
+    beNuclearSeries: []
   };
 
   const [genResult, outResult] = await Promise.allSettled([
     fetchGeneration(win, force),
     fetchEntsoe('/api/entsoe/outages?from=' + win.out.from + '&to=' + win.out.to)
-    // A75 / Belçika toplamı daha sonraki bir görevde etkinleştirilecek:
-    // fetchEntsoe('/api/entsoe/aggregated-generation?zone=BE')
   ]);
 
   if (genResult.status === 'fulfilled') {
@@ -190,9 +194,36 @@ async function loadEntsoe(opts) {
     console.error('[ENTSO-E bildirim]', outResult.reason);
   }
 
-  // A75 Belçika toplamı ve atribyüsiyon şimdilik devre dışı:
-  entry.beNuclearTotal = null;
-  entry.beAttribution = null;
+  // A75 Belçika nükleer serisi (kendi try/catch bloğunda, diğer yüklemeleri asla engellemez):
+  try {
+    const beNuclearRes = await fetchEntsoe('/api/entsoe/be-nuclear');
+    const series = Array.isArray(beNuclearRes)
+      ? beNuclearRes
+      : ((beNuclearRes && (beNuclearRes.series || beNuclearRes.data)) || []);
+    entry.beNuclearSeries = series;
+    if (series.length > 0) {
+      const last = series[series.length - 1];
+      if (last && Number.isFinite(Number(last.mw))) {
+        entry.beNuclearTotal = {
+          value_mw: Number(last.mw),
+          timestamp_ms: typeof last.t === 'number' ? last.t : new Date(last.t).getTime()
+        };
+      }
+    }
+  } catch (err) {
+    console.warn('[BE nuclear series fetch]', err);
+    entry.beNuclearSeries = [];
+  }
+
+  // Belçika atribyüsiyonunu hesapla (kendi try/catch bloğunda, hiçbir şeyi engellemez):
+  try {
+    if (entry.beNuclearTotal) {
+      entry.beAttribution = computeBelgiumAttribution(entry.gen, entry.beNuclearTotal, entry.out);
+    }
+  } catch (err) {
+    console.warn('[computeBelgiumAttribution çağrı hatası]', err);
+    entry.beAttribution = null;
+  }
 
   state.entsoe = entry;
 
@@ -208,167 +239,319 @@ async function loadEntsoe(opts) {
    Belçika atribyüsiyon mantığı: A75 canlı toplam + gecikmeli A73 + bildirimler
    ------------------------------------------------------------------ */
 function computeBelgiumAttribution(gen, beTotal, out) {
-  // Belçika nükleer santralleri ve kapasiteleri (net MW)
-  const beUnits = [
-    { key: "doel4", label: "Doel 4", capacityMW: 1033 },
-    { key: "tihange3", label: "Tihange 3", capacityMW: 1038 }
-  ];
+  try {
+    const beUnits = (CONFIG.entsoe && CONFIG.entsoe.belgianUnits) || [
+      { key: "doel4", label: "Doel 4", nominalMW: 1033 },
+      { key: "tihange3", label: "Tihange 3", nominalMW: 1038 }
+    ];
 
-  // Adım 1: Mevcut canlı toplam (A75)
-  const now = Date.now();
-  const totalMW = beTotal.value_mw;
-  const totalTs = beTotal.timestamp_ms;
+    const now = Date.now();
+    const totalMW = Number(beTotal && beTotal.value_mw);
+    const totalTs = (beTotal && beTotal.timestamp_ms) || now;
 
-  // Toplamı ünite sayısına çevir (tolerans: ~0.5 GW = 1 ünite)
-  const runningNow = Math.round(totalMW / 1000); // 0, 1, veya 2
+    if (!Number.isFinite(totalMW)) return null;
 
-  // Adım 2: Son bilinen ünite verisi (T_unit)
-  // Belgium A73 için en son veri noktasının zamanını bul
-  let tUnit = 0;
-  let unitsAtTUnit = {};
-  for (const unitDef of beUnits) {
-    const unit = (gen.units || []).find(u => u.key === unitDef.key);
-    if (unit && unit.points && unit.points.length) {
-      const latest = unit.points[unit.points.length - 1];
-      if (latest && Number.isFinite(latest[2])) { // genMW
-        if (latest[0] > tUnit) tUnit = latest[0];
-        unitsAtTUnit[unitDef.key] = latest[2] > 50; // üretim > 50 MW = çalışıyor
+    const d4Def = beUnits.find(u => u.key === 'doel4') || beUnits[0];
+    const t3Def = beUnits.find(u => u.key === 'tihange3') || beUnits[1];
+    const d4Nominal = d4Def.nominalMW;
+    const t3Nominal = t3Def.nominalMW;
+    const sumNominal = d4Nominal + t3Nominal; // 2071 MW
+    const tol = (CONFIG.entsoe && CONFIG.entsoe.belgianTolerance) || 50; // 50 MW
+    const singleUnitLimit = Math.max(d4Nominal, t3Nominal) + tol; // 1038 + 50 = 1088 MW
+
+    // Last A73 points for both units
+    const getUnitLastA73 = (key) => {
+      const u = ((gen && gen.units) || []).find(x => x.key === key);
+      if (!u || !u.points || !u.points.length) return null;
+      const pt = u.points[u.points.length - 1];
+      const net = Number.isFinite(pt[1]) ? pt[1] : null;
+      const prod = Number.isFinite(pt[2]) ? pt[2] : net;
+      return {
+        timestamp: pt[0],
+        netMW: net,
+        genMW: prod,
+        producing: prod != null && prod > 50
+      };
+    };
+
+    const d4A73 = getUnitLastA73('doel4');
+    const t3A73 = getUnitLastA73('tihange3');
+
+    // Active, not cancelled, not superseded A77/A80 outage notices
+    const notices = (out && out.notices) || [];
+    const beNotices = notices.filter(n =>
+      n.zoneKey === "BE" &&
+      (n.unitKey === "doel4" || n.unitKey === "tihange3") &&
+      n.status === "active" && !noticeIsInfo(n) &&
+      Number.isFinite(n.start) && Number.isFinite(n.end)
+    );
+
+    // Latest notice per unit (not superseded)
+    const latestNoticePerUnit = {};
+    for (const n of beNotices) {
+      const existing = latestNoticePerUnit[n.unitKey];
+      if (!existing || (n.created || 0) > (existing.created || 0)) {
+        latestNoticePerUnit[n.unitKey] = n;
       }
     }
-  }
 
-  if (tUnit === 0) {
+    const d4Notice = latestNoticePerUnit['doel4'];
+    const t3Notice = latestNoticePerUnit['tihange3'];
+
+    const attribution = {};
+    let reasoning = [];
+    let uncertain = false;
+
+    // Helper: is active outage notice with available 0 covering current time?
+    const isActiveZeroOutage = (n) =>
+      n && n.start <= now && n.end > now && n.availableMW != null && n.availableMW <= 50;
+
+    // Helper: does notice indicate ramp-up / startup / maintenance-return / power-reduction?
+    const hasRampOrReductionNotice = (n) => {
+      if (!n) return false;
+      if (n.availableMW != null && n.availableMW > 50 && n.availableMW < 1000) return true;
+      const txt = ((n.reasonText || '') + ' ' + (n.comment || '') + ' ' + (n.reason || '')).toLowerCase();
+      return /ramp|start|redémarr|reprise|step|essai|test|kısıt|reduc|réduc|curtail|baisse|maint|bakım/i.test(txt);
+    };
+
+    const getPartialNote = (key, partialMW, notice, lastA73, nominalMW) => {
+      const txt = ((notice && ((notice.reasonText || '') + ' ' + (notice.comment || '') + ' ' + (notice.reason || ''))) || '').toLowerCase();
+      if (/reduc|réduc|kısıt|baisse|curtail|limit/i.test(txt)) {
+        return 'güç azaltımında';
+      }
+      if (/ramp|start|redémarr|reprise|step-up|montee|montée|return|retour/i.test(txt)) {
+        return 'güç artırımında';
+      }
+      if (notice && (notice.availableMW <= 50 || /maint|bakım|entretien/i.test(txt))) {
+        return 'güç artırımında';
+      }
+      if (lastA73) {
+        if (lastA73.genMW <= 100 || !lastA73.producing) return 'güç artırımında';
+        if (lastA73.genMW >= nominalMW * 0.9) return 'güç azaltımında';
+      }
+      return 'güç artırımında';
+    };
+
+    // 1. total >= D4 + T3 - tol -> both = nominal.
+    if (totalMW >= sumNominal - tol) {
+      attribution['doel4'] = {
+        running: true,
+        estimatedMW: d4Nominal,
+        confidence: 'high',
+        reason: 'full_power',
+        unitLabel: d4Def.label,
+        notice: d4Notice,
+        partialNote: null
+      };
+      attribution['tihange3'] = {
+        running: true,
+        estimatedMW: t3Nominal,
+        confidence: 'high',
+        reason: 'full_power',
+        unitLabel: t3Def.label,
+        notice: t3Notice,
+        partialNote: null
+      };
+      reasoning.push(`Toplam (${nfMW.format(totalMW)} MW) tam kapasiteye yakın; her iki ünite nominal.`);
+    }
+    // 2. total <= one unit nominal + tol (single-unit range):
+    else if (totalMW <= singleUnitLimit) {
+      const d4Zero = isActiveZeroOutage(d4Notice);
+      const t3Zero = isActiveZeroOutage(t3Notice);
+
+      let activeUnitKey = null;
+      let zeroUnitKey = null;
+
+      // - The unit with an active outage notice (available 0) = 0; other = total.
+      if (d4Zero && !t3Zero) {
+        zeroUnitKey = 'doel4';
+        activeUnitKey = 'tihange3';
+      } else if (t3Zero && !d4Zero) {
+        zeroUnitKey = 'tihange3';
+        activeUnitKey = 'doel4';
+      }
+      // - If no notice: the unit that was producing in the last A73 data = total, other = 0.
+      else if (d4A73 && t3A73 && d4A73.producing && !t3A73.producing) {
+        activeUnitKey = 'doel4';
+        zeroUnitKey = 'tihange3';
+      } else if (d4A73 && t3A73 && t3A73.producing && !d4A73.producing) {
+        activeUnitKey = 'tihange3';
+        zeroUnitKey = 'doel4';
+      } else {
+        // Fallback: compare last gen MW
+        const d4Last = d4A73 ? (d4A73.genMW || 0) : 0;
+        const t3Last = t3A73 ? (t3A73.genMW || 0) : 0;
+        if (d4Last > t3Last) {
+          activeUnitKey = 'doel4';
+          zeroUnitKey = 'tihange3';
+        } else if (t3Last > d4Last) {
+          activeUnitKey = 'tihange3';
+          zeroUnitKey = 'doel4';
+        } else {
+          uncertain = true;
+          const half = Math.round(totalMW / 2);
+          attribution['doel4'] = {
+            running: half > 50,
+            estimatedMW: half,
+            confidence: 'low',
+            lowConfidence: true,
+            reason: 'unclear_split',
+            unitLabel: d4Def.label,
+            notice: d4Notice,
+            partialNote: null
+          };
+          attribution['tihange3'] = {
+            running: (totalMW - half) > 50,
+            estimatedMW: Math.max(0, totalMW - half),
+            confidence: 'low',
+            lowConfidence: true,
+            reason: 'unclear_split',
+            unitLabel: t3Def.label,
+            notice: t3Notice,
+            partialNote: null
+          };
+          reasoning.push(`Tek ünite aralığı (${nfMW.format(totalMW)} MW) ancak hangi ünite olduğu belirsiz (düşük güven).`);
+        }
+      }
+
+      if (activeUnitKey && zeroUnitKey) {
+        const estTotal = Math.max(0, Math.round(totalMW));
+        attribution[zeroUnitKey] = {
+          running: false,
+          estimatedMW: 0,
+          confidence: 'high',
+          reason: 'outage_zero',
+          unitLabel: zeroUnitKey === 'doel4' ? d4Def.label : t3Def.label,
+          notice: zeroUnitKey === 'doel4' ? d4Notice : t3Notice,
+          partialNote: null
+        };
+        attribution[activeUnitKey] = {
+          running: estTotal > 50,
+          estimatedMW: estTotal,
+          confidence: 'high',
+          reason: 'single_unit_total',
+          unitLabel: activeUnitKey === 'doel4' ? d4Def.label : t3Def.label,
+          notice: activeUnitKey === 'doel4' ? d4Notice : t3Notice,
+          partialNote: null
+        };
+        reasoning.push(`${zeroUnitKey === 'doel4' ? d4Def.label : t3Def.label} kapalı (0 MW); ${activeUnitKey === 'doel4' ? d4Def.label : t3Def.label} = ${nfMW.format(estTotal)} MW.`);
+      }
+    }
+    // 3. Between (total > one nominal + tol and < sum - tol) -> both are running, one is ramping/reduced.
+    // IMPORTANT: total is the truth; ignore "available 0" on notices here - they may be ending (e.g. return from maintenance).
+    else {
+      const d4NoticeHit = hasRampOrReductionNotice(d4Notice);
+      const t3NoticeHit = hasRampOrReductionNotice(t3Notice);
+
+      let partialKey = null;
+      let fullKey = null;
+
+      // - Partial unit = the one with a recent/active ramp-up, startup, maintenance-return or power-reduction notice (not cancelled, not superseded).
+      if (d4NoticeHit && !t3NoticeHit) {
+        partialKey = 'doel4';
+        fullKey = 'tihange3';
+      } else if (t3NoticeHit && !d4NoticeHit) {
+        partialKey = 'tihange3';
+        fullKey = 'doel4';
+      }
+      // - If both or neither have notices -> partial = the one that was offline/lower in the last A73 data.
+      else if (d4A73 && t3A73) {
+        const d4Val = d4A73.genMW != null ? d4A73.genMW : 0;
+        const t3Val = t3A73.genMW != null ? t3A73.genMW : 0;
+        if (d4Val < t3Val) {
+          partialKey = 'doel4';
+          fullKey = 'tihange3';
+        } else if (t3Val < d4Val) {
+          partialKey = 'tihange3';
+          fullKey = 'doel4';
+        }
+      }
+
+      // If still unclear -> split proportionally, low confidence.
+      if (!partialKey || !fullKey) {
+        uncertain = true;
+        const d4Avail = (d4Notice && Number.isFinite(d4Notice.availableMW) && d4Notice.availableMW > 50)
+          ? d4Notice.availableMW : d4Nominal;
+        const t3Avail = (t3Notice && Number.isFinite(t3Notice.availableMW) && t3Notice.availableMW > 50)
+          ? t3Notice.availableMW : t3Nominal;
+        const sumAvail = d4Avail + t3Avail;
+        const d4MW = sumAvail > 0 ? Math.round(totalMW * (d4Avail / sumAvail)) : Math.round(totalMW / 2);
+        const t3MW = Math.max(0, Math.round(totalMW - d4MW));
+
+        attribution['doel4'] = {
+          running: d4MW > 50,
+          estimatedMW: d4MW,
+          confidence: 'low',
+          lowConfidence: true,
+          reason: 'proportional_split',
+          unitLabel: d4Def.label,
+          notice: d4Notice,
+          partialNote: d4MW < d4Nominal * 0.9 ? 'güç artırımında' : null
+        };
+        attribution['tihange3'] = {
+          running: t3MW > 50,
+          estimatedMW: t3MW,
+          confidence: 'low',
+          lowConfidence: true,
+          reason: 'proportional_split',
+          unitLabel: t3Def.label,
+          notice: t3Notice,
+          partialNote: t3MW < t3Nominal * 0.9 ? 'güç artırımında' : null
+        };
+        reasoning.push(`Belirgin tekil bildirim yok; kapasiteye göre paylaştırıldı (düşük güven).`);
+      } else {
+        const fullNominal = fullKey === 'doel4' ? d4Nominal : t3Nominal;
+        const partialNominal = partialKey === 'doel4' ? d4Nominal : t3Nominal;
+        const partialMW = Math.max(0, Math.round(totalMW - fullNominal));
+        const partialNotice = partialKey === 'doel4' ? d4Notice : t3Notice;
+        const partialA73 = partialKey === 'doel4' ? d4A73 : t3A73;
+        const note = getPartialNote(partialKey, partialMW, partialNotice, partialA73, partialNominal);
+
+        attribution[fullKey] = {
+          running: true,
+          estimatedMW: fullNominal,
+          confidence: 'high',
+          reason: 'nominal',
+          unitLabel: fullKey === 'doel4' ? d4Def.label : t3Def.label,
+          notice: fullKey === 'doel4' ? d4Notice : t3Notice,
+          partialNote: null
+        };
+        attribution[partialKey] = {
+          running: partialMW > 50,
+          estimatedMW: partialMW,
+          confidence: 'high',
+          reason: 'partial_notice',
+          unitLabel: partialKey === 'doel4' ? d4Def.label : t3Def.label,
+          notice: partialNotice,
+          partialNote: note
+        };
+        reasoning.push(`${fullKey === 'doel4' ? d4Def.label : t3Def.label} nominal (${nfMW.format(fullNominal)} MW); ${partialKey === 'doel4' ? d4Def.label : t3Def.label} kısmi (${nfMW.format(partialMW)} MW, ${note}).`);
+      }
+    }
+
+    let tUnit = 0;
+    for (const unitDef of beUnits) {
+      const unit = (gen.units || []).find(u => u.key === unitDef.key);
+      if (unit && unit.points && unit.points.length) {
+        const latest = unit.points[unit.points.length - 1];
+        if (latest && latest[0] > tUnit) tUnit = latest[0];
+      }
+    }
+
     return {
-      error: "Belçika ünite verisi bulunamadı",
+      tUnit,
+      tUnitStr: tUnit ? fmtDDMMTime.format(new Date(tUnit)) : '',
       totalMW,
       totalTs,
-      runningNow,
-      units: {}
+      totalTsStr: fmtDDMMTime.format(new Date(totalTs)),
+      attribution,
+      reasoning,
+      uncertain
     };
+  } catch (err) {
+    console.warn('[computeBelgiumAttribution hatası]', err);
+    return null;
   }
-
-  const runningAtTUnit = Object.values(unitsAtTUnit).filter(v => v).length;
-
-  // Adım 3: Karşılaştır
-  const delta = runningNow - runningAtTUnit;
-
-  // Adım 4: Bildirimlerle değişimi açıkla (T_unit, now] penceresi
-  const notices = (out && out.notices) || [];
-  const beNotices = notices.filter(n => n.zoneKey === "BE" &&
-    n.unitKey && (n.unitKey === "doel4" || n.unitKey === "tihange3") &&
-    n.status === "active" && !noticeIsInfo(n) &&
-    Number.isFinite(n.created) && n.created > tUnit && n.created <= now);
-
-  // Her ünite için en yeni bildirimi bul (publication time = created)
-  const latestNoticePerUnit = {};
-  for (const n of beNotices) {
-    const existing = latestNoticePerUnit[n.unitKey];
-    if (!existing || (n.created || 0) > (existing.created || 0)) {
-      latestNoticePerUnit[n.unitKey] = n;
-    }
-  }
-
-  // Değişimi atfet
-  let attribution = {};
-  let reasoning = [];
-  let uncertain = false;
-
-  if (delta === 0) {
-    // Aynı sayıda ünite - T_unit'daki durum devam ediyor, ama bildirimler varsa onları da kontrol et
-    for (const unitDef of beUnits) {
-      const wasRunning = unitsAtTUnit[unitDef.key] || false;
-      const notice = latestNoticePerUnit[unitDef.key];
-      if (notice && notice.availableMW != null && notice.availableMW <= 0.5 && notice.end && notice.end > now) {
-        // Bu ünite için kapanma bildirimi var
-        attribution[unitDef.key] = { running: false, reason: "notice", notice, confidence: "yüksek" };
-        reasoning.push(`${unitDef.label}: ${fmtDDMMTime.format(new Date(notice.created))} bildirimi ile kapanış (kullanılabilir ${notice.availableMW} MW)`);
-      } else if (notice && notice.availableMW != null && notice.availableMW > 0.5 && notice.start && notice.start <= now && notice.end && notice.end > now) {
-        // Bu ünite için yeniden başlatma/ramp-up bildirimi var
-        attribution[unitDef.key] = { running: true, reason: "notice", notice, confidence: "yüksek" };
-        reasoning.push(`${unitDef.label}: ${fmtDDMMTime.format(new Date(notice.created))} bildirimi ile yeniden başlatma`);
-      } else {
-        attribution[unitDef.key] = { running: wasRunning, reason: "t_unit", confidence: "orta" };
-      }
-    }
-  } else if (delta < 0) {
-    // Daha az ünite çalışıyor - hangisi durdu?
-    const stoppedCandidates = [];
-    for (const unitDef of beUnits) {
-      const wasRunning = unitsAtTUnit[unitDef.key] || false;
-      const notice = latestNoticePerUnit[unitDef.key];
-      if (wasRunning && notice && notice.availableMW != null && notice.availableMW <= 0.5 && notice.end && notice.end > now) {
-        stoppedCandidates.push({ unit: unitDef.key, notice, reason: "shutdown_notice" });
-      } else if (wasRunning && notice && notice.kind === "planned" && notice.end && notice.end > now) {
-        stoppedCandidates.push({ unit: unitDef.key, notice, reason: "planned_outage" });
-      }
-    }
-    if (stoppedCandidates.length === 1) {
-      const c = stoppedCandidates[0];
-      attribution[c.unit] = { running: false, reason: c.reason, notice: c.notice, confidence: "yüksek olasılık" };
-      reasoning.push(`${UNIT_BY_KEY[c.unit]?.label || c.unit}: ${fmtDDMMTime.format(new Date(c.notice.created))} bildirimi ile kapanış`);
-      for (const unitDef of beUnits) {
-        if (unitDef.key !== c.unit) {
-          attribution[unitDef.key] = { running: unitsAtTUnit[unitDef.key] || false, reason: "t_unit", confidence: "orta" };
-        }
-      }
-    } else {
-      uncertain = true;
-      reasoning.push(`${Math.abs(delta)} ünite durdu ama hangisi belirsiz (${stoppedCandidates.length} aday)`);
-      for (const unitDef of beUnits) {
-        attribution[unitDef.key] = { running: unitsAtTUnit[unitDef.key] || false, reason: "t_unit", confidence: "belirsiz" };
-      }
-    }
-  } else { // delta > 0
-    // Daha fazla ünite çalışıyor - hangisi başladı?
-    const startedCandidates = [];
-    for (const unitDef of beUnits) {
-      const wasRunning = unitsAtTUnit[unitDef.key] || false;
-      const notice = latestNoticePerUnit[unitDef.key];
-      if (!wasRunning && notice && (notice.kind === "planned" || notice.reasonCode === "A95") &&
-          notice.availableMW != null && notice.availableMW > 0.5 && notice.start && notice.start <= now && notice.end && notice.end > now) {
-        startedCandidates.push({ unit: unitDef.key, notice, reason: "ramp_up" });
-      }
-    }
-    if (startedCandidates.length === 1) {
-      const c = startedCandidates[0];
-      attribution[c.unit] = { running: true, reason: c.reason, notice: c.notice, confidence: "yüksek olasılık" };
-      reasoning.push(`${UNIT_BY_KEY[c.unit]?.label || c.unit}: ${fmtDDMMTime.format(new Date(c.notice.created))} bildirimi ile yeniden başlatma`);
-      for (const unitDef of beUnits) {
-        if (unitDef.key !== c.unit) {
-          attribution[unitDef.key] = { running: unitsAtTUnit[unitDef.key] || false, reason: "t_unit", confidence: "orta" };
-        }
-      }
-    } else {
-      uncertain = true;
-      reasoning.push(`${delta} ünite başladı ama hangisi belirsiz (${startedCandidates.length} aday)`);
-      for (const unitDef of beUnits) {
-        attribution[unitDef.key] = { running: unitsAtTUnit[unitDef.key] || false, reason: "t_unit", confidence: "belirsiz" };
-      }
-    }
-  }
-
-  // Tahmini üretilen MW hesapla
-  for (const unitDef of beUnits) {
-    const attr = attribution[unitDef.key];
-    attr.estimatedMW = attr.running ? unitDef.capacityMW : 0;
-    attr.unitLabel = unitDef.label;
-  }
-
-  return {
-    tUnit,
-    tUnitStr: fmtDDMMTime.format(new Date(tUnit)),
-    totalMW,
-    totalTs,
-    totalTsStr: fmtDDMMTime.format(new Date(totalTs)),
-    runningNow,
-    runningAtTUnit,
-    delta,
-    unitsAtTUnit,
-    latestNoticePerUnit,
-    attribution,
-    reasoning,
-    uncertain
-  };
 }
 
 /* ------------------------------------------------------------------
@@ -504,15 +687,15 @@ function unitSnapshot(key, unit, notices, now, beAttribution) {
   // 2. Belçika atribyüsiyonu varsa
   else if (isBelgianUnit && attribution) {
     if (attribution.running) {
-      tone = "ok";
-      label = "çalışıyor (tahmini)";
-      source = "A75 toplam + atribyüsiyon";
-      sourceDetail = "son ünite verisi " + (beAttribution.tUnitStr || "") + " + bildirimler";
+      tone = attribution.lowConfidence ? "warn" : "ok";
+      label = attribution.partialNote || (attribution.lowConfidence ? "tahmin (düşük güven)" : "tahmin");
+      source = "A75 Belçika nükleer toplamı + bildirimler";
+      sourceDetail = "";
     } else {
       tone = "stop";
-      label = "kapalı (tahmini)";
-      source = "A75 toplam + atribyüsiyon";
-      sourceDetail = "son ünite verisi " + (beAttribution.tUnitStr || "") + " + bildirimler";
+      label = "kapalı";
+      source = "A75 Belçika nükleer toplamı + bildirimler";
+      sourceDetail = "";
     }
   }
   // 3. Eski A73 verisi ama üretim > 50 MW
@@ -609,7 +792,7 @@ function unitSnapshot(key, unit, notices, now, beAttribution) {
     netMW,
     genMW,
     consMW,
-    availableMW: attribution ? (attribution.running ? attribution.estimatedMW : 0) : (availableMW != null ? availableMW : null),
+    availableMW: attribution ? attribution.estimatedMW : (availableMW != null ? availableMW : null),
     installedMW,
     tone,
     label,

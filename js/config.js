@@ -81,6 +81,12 @@ const CONFIG = {
     noticeMaxItems: 40,
     productionOverlayDefault: false,
 
+    belgianUnits: [
+      { key: 'doel4',    label: 'Doel 4',    nominalMW: 1033 },
+      { key: 'tihange3', label: 'Tihange 3', nominalMW: 1038 }
+    ],
+    belgianTolerance: 50, // MW
+
     // Çevresel kısıt ipuçları (comment / reason). A95 "ek bilgi" sayılır.
     envPattern: /environ|environmental|[ée]colog|ecological|çevresel|cevresel|milieu/i,
 
@@ -192,7 +198,7 @@ const state = {
   busy: 0
 };
 
-const charts = { h: null, q: null, d: null, cmp: null, gen: new Map() };
+const charts = { h: null, q: null, d: null, cmp: null, gen: new Map(), beNuclear: null };
 const failures = new Map();   // key -> { label, reason }
 
 const UNIT_BY_KEY = new Proxy({

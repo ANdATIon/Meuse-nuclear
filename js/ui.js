@@ -150,9 +150,50 @@ function plantSectionHtml(plant) {
   '</section>';
 }
 
+function beSectionHtml() {
+  const color = '#58A6FF';
+  return '<section class="plant-section" id="plantSection_belgium" data-plant="belgium">' +
+    '<div class="section-head">' +
+      '<div><h2>Belçika</h2>' +
+        '<p class="section-sub">' +
+          'Belçika · ENTSO-E <code>10YBE----------2</code> · Doel 4 / Tihange 3' +
+        '</p></div>' +
+      '<span class="section-meta" style="color:' + color + '">BE</span>' +
+    '</div>' +
+    '<div class="grid">' +
+      '<article class="card wide" id="beNuclearCard">' +
+        '<div class="card-head">' +
+          '<div>' +
+            '<h2>Belçika nükleer toplam üretimi (A75)</h2>' +
+            '<div class="card-source">ENTSO-E Transparency Platform (A75)</div>' +
+          '</div>' +
+          '<span class="tag"><span id="beNuclearTag">son 7 gün</span> · MW</span>' +
+        '</div>' +
+        '<div class="chart-box">' +
+          '<canvas id="beNuclearChart" role="img" aria-label="Belçika nükleer toplam üretim grafiği, megavat"></canvas>' +
+          '<div class="overlay"><span class="spinner"></span> Yükleniyor…</div>' +
+          '<div class="chart-empty" id="beNuclearEmpty"></div>' +
+        '</div>' +
+        '<p class="card-err" id="beNuclearErr" hidden></p>' +
+        '<div class="card-foot" id="beNuclearFoot"></div>' +
+      '</article>' +
+    '</div>' +
+  '</section>';
+}
+
 function buildPlantSections() {
   const plants = orderedPlants();
-  ui.plantSections.innerHTML = plants.map(plantSectionHtml).join('');
+  const beHtml = beSectionHtml();
+  const beIndex = plants.findIndex((p) => p.country === 'BE');
+  let html = '';
+  if (beIndex >= 0) {
+    const before = plants.slice(0, beIndex).map(plantSectionHtml).join('');
+    const after = plants.slice(beIndex).map(plantSectionHtml).join('');
+    html = before + beHtml + after;
+  } else {
+    html = plants.map(plantSectionHtml).join('') + beHtml;
+  }
+  ui.plantSections.innerHTML = html;
 
   // Nehir paneli tek örnektir: ilk nehirli santralin (Chooz) altına taşınır.
   const riverPlant = plants.find((plant) => plant.river);
@@ -311,6 +352,8 @@ function updateRangeTags() {
   ui.hTag.textContent = tag;
   ui.qTag.textContent = tag;
   ui.cmpTag.textContent = tag;
+  const beTag = $('beNuclearTag');
+  if (beTag) beTag.textContent = tag;
   orderedPlants().forEach((plant) => {
     const el = $('genTag_' + plant.key);
     if (el) el.textContent = tag;
@@ -658,8 +701,30 @@ function renderTopStrip(units, genUnits, notices, now, es) {
       : null;
     const isStale24h = !latest || (now - latest[0] > 24 * 60 * 60 * 1000);
 
+    const isBelgian = (k === 'doel4' || k === 'tihange3');
+    const hasFreshA73 = !!latest && (
+      !isStale24h ||
+      (es.beNuclearTotal && latest[0] >= es.beNuclearTotal.timestamp_ms)
+    );
+    let isEstimated = false;
+    try {
+      isEstimated = isBelgian && snap.attribution && snap.attribution.estimatedMW != null && !hasFreshA73;
+    } catch (_) {}
+
     let dotClass = 'ok';
-    if (isStale24h) {
+    if (isEstimated) {
+      const estMW = snap.attribution.estimatedMW;
+      if (estMW != null && Number.isFinite(estMW)) {
+        totalNet += estMW;
+      }
+      if (snap.attribution.lowConfidence || snap.attribution.confidence === 'low') {
+        dotClass = 'warn';
+      } else if (estMW <= 50) {
+        dotClass = 'bad';
+      } else {
+        dotClass = 'ok';
+      }
+    } else if (isStale24h) {
       dotClass = 'stale';
       hasExcluded = true;
     } else {
@@ -720,11 +785,20 @@ function renderReactors() {
       metaText += ' · ' + activeCount + ' aktif bildirim';
     }
     // Belçika nükleer toplam ve son ünite verisi zamanı
-    if (es.beNuclearTotal) {
+    let beMW = null;
+    if (es.beNuclearSeries && es.beNuclearSeries.length > 0) {
+      const last = es.beNuclearSeries[es.beNuclearSeries.length - 1];
+      if (last && Number.isFinite(Number(last.mw))) beMW = Number(last.mw);
+    } else if (es.beNuclearTotal && Number.isFinite(Number(es.beNuclearTotal.value_mw))) {
+      beMW = Number(es.beNuclearTotal.value_mw);
+    }
+    if (beMW !== null) {
+      metaText += ' · BELÇİKA NÜKLEER: ' + nfMW.format(beMW) + ' MW (CANLI)';
+    } else if (es.beNuclearTotal) {
       metaText += ' | Belçika nükleer: ' + nfMW.format(es.beNuclearTotal.value_mw) + ' MW (canlı)';
-      if (es.beAttribution && es.beAttribution.tUnitStr) {
-        metaText += ' · ünite verisi son: ' + es.beAttribution.tUnitStr;
-      }
+    }
+    if (es.beAttribution && es.beAttribution.tUnitStr) {
+      metaText += ' · ünite verisi son: ' + es.beAttribution.tUnitStr;
     }
     ui.reactorMeta.textContent = metaText;
   }
@@ -736,10 +810,26 @@ function renderReactors() {
     const genUnit = genUnits.get(unit.key);
     const snap = unitSnapshot(unit.key, genUnit, notices, now, es && es.beAttribution);
     const toneClass = snap.tone ? 'tone-' + snap.tone : '';
-    const netClass = snap.netMW == null ? ' none' : (snap.netMW < -0.5 ? ' negative' : '');
-    const netHtml = snap.netMW == null
+    const latestPt = genUnit && genUnit.points && genUnit.points.length
+      ? genUnit.points[genUnit.points.length - 1]
+      : null;
+    const isStale24 = !latestPt || (now - latestPt[0] > 24 * 60 * 60 * 1000);
+
+    const isBelgian = (unit.key === 'doel4' || unit.key === 'tihange3');
+    const hasFreshA73 = !!latestPt && (
+      (now - latestPt[0] <= 24 * 60 * 60 * 1000) ||
+      (es.beNuclearTotal && latestPt[0] >= es.beNuclearTotal.timestamp_ms)
+    );
+    let isBelgianEstimated = false;
+    try {
+      isBelgianEstimated = isBelgian && snap.attribution && snap.attribution.estimatedMW != null && !hasFreshA73;
+    } catch (_) {}
+
+    const displayMW = isBelgianEstimated ? snap.attribution.estimatedMW : snap.netMW;
+    const netClass = displayMW == null ? ' none' : (displayMW < -0.5 ? ' negative' : '');
+    const netHtml = displayMW == null
       ? 'üretim verisi yok'
-      : nfMW.format(snap.netMW) + ' <span class="unit">MW net</span>';
+      : nfMW.format(displayMW) + ' <span class="unit">MW net</span>';
     let availHtml = '—';
     if (snap.availableMW != null) {
       availHtml = nfMW.format(snap.availableMW) + '<small>MW</small>';
@@ -747,14 +837,19 @@ function renderReactors() {
       availHtml = nfMW.format(snap.installedMW) + '<small>MW kurulu</small>';
     }
 
-    const latestPt = genUnit && genUnit.points && genUnit.points.length
-      ? genUnit.points[genUnit.points.length - 1]
-      : null;
-    const isStale24 = !latestPt || (now - latestPt[0] > 24 * 60 * 60 * 1000);
-
     let statusText = '';
     let statusClass = '';
-    if (isStale24) {
+    if (isBelgianEstimated) {
+      const isLow = snap.attribution.lowConfidence || snap.attribution.confidence === 'low' || (es.beAttribution && es.beAttribution.uncertain);
+      statusText = isLow ? 'TAHMİN (DÜŞÜK GÜVEN)' : 'TAHMİN';
+      if (isLow) {
+        statusClass = 'warn';
+      } else if (snap.attribution.estimatedMW <= 50) {
+        statusClass = 'bad';
+      } else {
+        statusClass = 'ok';
+      }
+    } else if (isStale24) {
       const days = latestPt ? Math.max(1, Math.floor((now - latestPt[0]) / (24 * 60 * 60 * 1000))) : 1;
       statusText = 'VERİ ESKİ ' + days + 'g';
       statusClass = 'stale';
@@ -780,6 +875,15 @@ function renderReactors() {
       ? '<div class="reactor-superseded">Aşılmış bildirimler: ' + snap.supersededNotices.length + '</div>'
       : '';
 
+    const partialNote = (isBelgianEstimated && snap.attribution && snap.attribution.partialNote) || '';
+    const partialNoteHtml = partialNote
+      ? '<div class="reactor-partial-note" style="color:var(--warn,#D29922);font-size:11px;font-weight:600;margin-top:2px">' + esc(partialNote) + '</div>'
+      : '';
+
+    const footerSource = isBelgianEstimated
+      ? 'Kaynak: A75 Belçika nükleer toplamı + bildirimler'
+      : (snap.sourceInfo || '');
+
     return '<article class="reactor-card ' + toneClass + '">' +
       '<div class="reactor-top">' +
         '<div>' +
@@ -790,6 +894,7 @@ function renderReactors() {
         '<span class="status-plain ' + statusClass + '">' + esc(statusText) + '</span>' +
       '</div>' +
       '<div class="reactor-net' + netClass + '">' + netHtml + '</div>' +
+      partialNoteHtml +
       '<div class="reactor-metrics">' +
         '<div class="reactor-metric">' +
           '<span class="reactor-metric-label">Kullanılabilir</span>' +
@@ -799,7 +904,7 @@ function renderReactors() {
       '<div class="reactor-spark">' + sparklineSvg(sparkPoints) + '</div>' +
       '<div class="reactor-notice">' + snap.extra + '</div>' +
       supersededHtml +
-      '<div class="reactor-source" title="' + esc(snap.sourceInfo) + '"><small>' + esc(snap.sourceInfo) + '</small></div>' +
+      '<div class="reactor-source" title="' + esc(footerSource) + '"><small>' + esc(footerSource) + '</small></div>' +
       '</article>';
   }).join('');
 }
@@ -1233,6 +1338,12 @@ function renderAll() {
   syncCustomBounds();
   renderReactors();
 
+  try {
+    renderBeNuclearCard();
+  } catch (err) {
+    console.warn('[renderBeNuclearCard]', err);
+  }
+
   orderedPlants().forEach((plant) => {
     renderPlantGenCard(plant);
     renderPlantNotices(plant);
@@ -1258,5 +1369,62 @@ function renderAll() {
     const genUnits = new Map(((es.gen && es.gen.units) || []).map((u) => [u.key, u]));
     const notices = (es.out && es.out.notices) || [];
     renderTopStrip(allOverviewUnits(), genUnits, notices, now, es);
+  }
+}
+
+function renderBeNuclearCard() {
+  if (!charts.beNuclear && typeof initBeNuclearChart === 'function') {
+    initBeNuclearChart();
+  }
+  const chart = charts.beNuclear;
+  const card = $('beNuclearCard');
+  const emptyEl = $('beNuclearEmpty');
+  const errEl = $('beNuclearErr');
+  const footEl = $('beNuclearFoot');
+  if (!card || !chart || !emptyEl || !errEl || !footEl) return;
+
+  setCardEmpty(card, emptyEl, null);
+  showCardError(errEl, '');
+
+  const es = state.entsoe;
+  if (!es) return;
+
+  const rawSeries = es.beNuclearSeries || [];
+  if (!rawSeries.length) {
+    chart.data.datasets.forEach((ds) => { ds.data = []; });
+    chart.update('none');
+    footEl.innerHTML = '';
+    setCardEmpty(card, emptyEl, 'Belçika nükleer toplam üretim verisi henüz hazır değil.');
+    return;
+  }
+
+  const bounds = currentBounds();
+  const points = rawSeries.map((p) => ({
+    x: typeof p.t === 'number' ? p.t : new Date(p.t).getTime(),
+    y: Number(p.mw)
+  })).filter((p) => Number.isFinite(p.x) && Number.isFinite(p.y));
+
+  const filtered = filterPoints(points, bounds);
+  const dataset = chart.data.datasets[0];
+  if (!dataset) return;
+
+  dataset.label = 'Belçika nükleer toplamı (MW)';
+  dataset.data = filtered.length
+    ? withGaps(filtered, (CONFIG.entsoe && CONFIG.entsoe.genBreakMs) || (2 * 60 * 60 * 1000))
+    : [];
+
+  if (filtered.length) {
+    const latestX = filtered[filtered.length - 1].x;
+    const first = bounds && bounds.from ? bounds.from : latestX - DAY;
+    setChartTickFormat(chart, tickFormatterForSpan(latestX - first));
+    renderFoot(footEl, filtered, 'MW', nfMW);
+  } else {
+    footEl.innerHTML = '';
+  }
+
+  chart.update('none');
+
+  if (!filtered.length) {
+    setCardEmpty(card, emptyEl, 'Seçilen aralıkta veri bulunamadı.');
   }
 }

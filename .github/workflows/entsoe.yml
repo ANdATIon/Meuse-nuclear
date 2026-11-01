@@ -2,7 +2,8 @@ name: Update ENTSO-E Data
 
 on:
   schedule:
-    - cron: '*/30 * * * *'
+    # Run every 20-30 min at off-peak minutes to avoid GitHub's heavy :00/:30 congestion
+    - cron: '15,45 * * * *'
   workflow_dispatch:
 
 permissions:
@@ -19,6 +20,14 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+
+      - name: Cache ENTSO-E past days
+        uses: actions/cache@v4
+        with:
+          path: cache/
+          key: entsoe-cache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            entsoe-cache-${{ runner.os }}-
 
       - name: Run ENTSO-E fetch script
         env:

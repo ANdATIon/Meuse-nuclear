@@ -41,7 +41,7 @@ def main():
     gen_end = today + timedelta(days=1)
 
     print(f"Fetching generation data from {gen_start.date()} to {gen_end.date()}...")
-    gen_payload = server.build_generation_payload(gen_start, gen_end, force=True)
+    gen_payload = server.build_generation_payload(gen_start, gen_end, force=False)
 
     # If any days were pending/downloading in background threads, wait for them to finish
     cursor = gen_start
@@ -80,6 +80,16 @@ def main():
     out_file = data_dir / "outages.json"
     out_file.write_text(json.dumps(out_payload, ensure_ascii=False, indent=2), encoding="utf-8")
     print(f"Wrote {out_file}")
+
+    # Belgium aggregated nuclear series (A75)
+    print("Fetching Belgium nuclear series (A75)...")
+    try:
+        be_series = server.fetch_be_nuclear_series()
+        be_file = data_dir / "be-nuclear.json"
+        be_file.write_text(json.dumps(be_series, ensure_ascii=False, indent=2), encoding="utf-8")
+        print(f"Wrote {be_file}")
+    except Exception as err:
+        print(f"Warning: Failed fetching be-nuclear: {err}", file=sys.stderr)
 
 
 if __name__ == "__main__":

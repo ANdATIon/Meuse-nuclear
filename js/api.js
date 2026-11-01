@@ -103,55 +103,94 @@ function entsoeWindow() {
   };
 }
 
+function entsoeStaticFallback(path) {
+  if (path.startsWith('/api/entsoe/generation')) return './data/generation.json';
+  if (path.startsWith('/api/entsoe/outages')) return './data/outages.json';
+  if (path.startsWith('/api/entsoe/be-nuclear')) return './data/be-nuclear.json';
+  if (path.startsWith('/api/entsoe/aggregated-generation')) return './data/aggregated-generation.json';
+  return null;
+}
+
 async function fetchEntsoe(path, opts) {
   const timeoutMs = (opts && opts.timeoutMs) || 60000;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
-  let targetUrl = entsoeBase() + path;
-  if (path.startsWith('/api/entsoe/generation')) {
-    targetUrl = './data/generation.json';
-  } else if (path.startsWith('/api/entsoe/outages')) {
-    targetUrl = './data/outages.json';
-  }
+  const apiUrl = entsoeBase() + path;
+  const fallbackUrl = entsoeStaticFallback(path);
 
+  // 1. Canlı yerel backend'i (/api/...) dene
+  let liveSucceeded = false;
   try {
-    const res = await fetch(targetUrl, {
+    const res = await fetch(apiUrl, {
       signal: controller.signal,
       headers: { Accept: 'application/json' },
       cache: 'no-store'
     });
 
+    if (res.ok) {
+      let json = null;
+      try {
+        json = await res.json();
+      } catch (_) {
+        json = null;
+      }
+      if (json && json.ok !== false) {
+        liveSucceeded = true;
+        return json;
+      }
+    }
+
+    // Backend 404 (örn. GitHub Pages) veya hata verdiyse statik JSON yedeğine geç
+    if (!liveSucceeded && fallbackUrl) {
+      console.warn('[API] Canlı uç nokta (' + res.status + ') yanıt vermedi, statik dosyaya geçiliyor:', fallbackUrl);
+      const fbRes = await fetch(fallbackUrl, {
+        signal: controller.signal,
+        headers: { Accept: 'application/json' },
+        cache: 'no-store'
+      });
+      if (fbRes.ok) {
+        const fbJson = await fbRes.json().catch(() => null);
+        if (fbJson && fbJson.ok !== false) return fbJson;
+      }
+    }
+
     let json = null;
     try {
       json = await res.json();
-    } catch (err) {
+    } catch (_) {
       json = null;
     }
-
-    if (!json) {
-      const e = new Error('Veri geçersiz yanıt döndü (HTTP ' + res.status + ').');
-      e.code = 'bad_response';
-      throw e;
-    }
-
-    if (!res.ok || json.ok === false) {
-      const detail = json.error || {};
-      const e = new Error(detail.message || ('HTTP ' + res.status));
-      e.code = detail.code || 'upstream_error';
-      e.status = res.status;
-      throw e;
-    }
-
-    return json;
+    const detail = (json && json.error) || {};
+    const e = new Error(detail.message || ('HTTP ' + res.status));
+    e.code = detail.code || 'upstream_error';
+    e.status = res.status;
+    throw e;
   } catch (err) {
     if (err && err.name === 'AbortError') {
       const e = new Error('İstek ' + Math.round(timeoutMs / 1000) + ' saniye içinde yanıtlanmadı.');
       e.code = 'timeout';
       throw e;
     }
+
+    // Ağ hatası (sunucu kapalı, GitHub Pages statik yayın vb.) durumunda statik dosyayı dene
+    if (!liveSucceeded && fallbackUrl) {
+      try {
+        console.warn('[API] Backend\'e ulaşılamadı, statik dosyaya geçiliyor:', fallbackUrl);
+        const fbRes = await fetch(fallbackUrl, {
+          signal: controller.signal,
+          headers: { Accept: 'application/json' },
+          cache: 'no-store'
+        });
+        if (fbRes.ok) {
+          const fbJson = await fbRes.json().catch(() => null);
+          if (fbJson && fbJson.ok !== false) return fbJson;
+        }
+      } catch (_) {}
+    }
+
     if (err instanceof TypeError) {
-      const e = new Error('Veriye ulaşılamadı: ' + targetUrl);
+      const e = new Error('Veriye ulaşılamadı: ' + apiUrl);
       e.code = 'network';
       throw e;
     }

@@ -428,6 +428,35 @@ function initPlantCharts() {
 
     charts.gen.set(plant.key, chart);
   });
+
+  initBeNuclearChart();
+}
+
+function initBeNuclearChart() {
+  const canvasId = 'beNuclearChart';
+  if (!$(canvasId)) return;
+  if (charts.beNuclear) {
+    try { charts.beNuclear.destroy(); } catch (e) {}
+  }
+  charts.beNuclear = buildChart(canvasId, {
+    label: 'Belçika nükleer toplamı (MW)',
+    color: '#58A6FF',
+    unit: 'MW',
+    tension: 0.16,
+    maxTicks: 8,
+    legend: false,
+    zeroLine: true,
+    suggestedMax: 2100,
+    tickFormat: (v) => fmtDDMM.format(new Date(v)),
+    titleFormat: (v) => fmtFull.format(new Date(v)),
+    valueFormat: (v) => nfMW.format(v),
+    yFormat: (v) => nfMW.format(v)
+  });
+
+  if (charts.beNuclear) {
+    charts.beNuclear.data.datasets[0].$unit = 'MW';
+    charts.beNuclear.data.datasets[0].$fmt = (v) => nfMW.format(v);
+  }
 }
 
 function pushChart(key, points, label) {
@@ -462,4 +491,10 @@ function resetCharts() {
     const foot = $('genFoot_' + plant.key);
     if (foot) foot.innerHTML = '';
   });
+  if (charts.beNuclear) {
+    charts.beNuclear.data.datasets.forEach((ds) => { ds.data = []; });
+    charts.beNuclear.update('none');
+  }
+  const beFoot = $('beNuclearFoot');
+  if (beFoot) beFoot.innerHTML = '';
 }

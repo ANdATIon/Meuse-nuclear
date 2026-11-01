@@ -1,0 +1,10 @@
+{
+  "ok": true,
+  "zone": "BE",
+  "data": {
+    "value_mw": 997.0,
+    "timestamp_ms": 1793559600000,
+    "resolution_ms": 900000
+  },
+  "cached": false
+}

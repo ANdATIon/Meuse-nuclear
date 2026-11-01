@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 1083,
+      "documents": 1085,
       "matched": 11
     },
     "BE": {
@@ -122,7 +122,7 @@
   "to": "2026-11-09",
   "fromTs": 1790899200000,
   "toTs": 1794182400000,
-  "fetchedAt": 1793541056180,
+  "fetchedAt": 1793559340247,
   "notices": [
     {
       "id": "PK6y4psB_8-lNI3i0tI6Xw",
@@ -176,7 +176,7 @@
     },
     {
       "id": "3Jj_8JBDhXV_HskCeHHaJA",
-      "revision": 1,
+      "revision": 2,
       "status": "active",
       "statusCode": "A05",
       "kind": "forced",
@@ -195,8 +195,8 @@
       "installedMW": 1500.0,
       "availableMW": 0.0,
       "start": 1793469660000,
-      "end": 1793703600000,
-      "created": 1793469757000,
+      "end": 1793790000000,
+      "created": 1793554477000,
       "docType": "A80"
     },
     {
@@ -1376,7 +1376,7 @@
     }
   ],
   "counts": {
-    "documents": 1387,
+    "documents": 1389,
     "matched": 50,
     "active": 40,
     "activeForced": 5

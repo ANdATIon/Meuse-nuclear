@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 1056,
+      "documents": 1060,
       "matched": 11
     },
     "BE": {
@@ -122,7 +122,7 @@
   "to": "2026-11-10",
   "fromTs": 1790985600000,
   "toTs": 1794268800000,
-  "fetchedAt": 1793586478517,
+  "fetchedAt": 1793613511384,
   "notices": [
     {
       "id": "PK6y4psB_8-lNI3i0tI6Xw",
@@ -143,7 +143,7 @@
       "zoneKey": "BE",
       "eic": "22WDOELX40000793",
       "installedMW": 1026.0,
-      "availableMW": 231.3,
+      "availableMW": 456.3,
       "schedule": [
         {
           "t": 1793559600000,
@@ -650,7 +650,7 @@
       "zoneKey": "BE",
       "eic": "22WDOELX40000793",
       "installedMW": 1026.0,
-      "availableMW": 231.3,
+      "availableMW": 456.3,
       "schedule": [
         {
           "t": 1793559600000,
@@ -7112,7 +7112,7 @@
     }
   ],
   "counts": {
-    "documents": 1333,
+    "documents": 1337,
     "matched": 50,
     "active": 40,
     "activeForced": 5

@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 1072,
+      "documents": 1077,
       "matched": 11
     },
     "BE": {
@@ -122,7 +122,7 @@
   "to": "2026-11-11",
   "fromTs": 1791072000000,
   "toTs": 1794355200000,
-  "fetchedAt": 1793700221988,
+  "fetchedAt": 1793728151174,
   "notices": [
     {
       "id": "PK6y4psB_8-lNI3i0tI6Xw",
@@ -143,7 +143,7 @@
       "zoneKey": "BE",
       "eic": "22WDOELX40000793",
       "installedMW": 1026.0,
-      "availableMW": 1000.0,
+      "availableMW": 1025.8,
       "schedule": [
         {
           "t": 1793559600000,
@@ -650,7 +650,7 @@
       "zoneKey": "BE",
       "eic": "22WDOELX40000793",
       "installedMW": 1026.0,
-      "availableMW": 1000.0,
+      "availableMW": 1025.8,
       "schedule": [
         {
           "t": 1793559600000,
@@ -1140,7 +1140,7 @@
     },
     {
       "id": "3Jj_8JBDhXV_HskCeHHaJA",
-      "revision": 2,
+      "revision": 3,
       "status": "active",
       "statusCode": "A05",
       "kind": "forced",
@@ -1165,8 +1165,8 @@
         }
       ],
       "start": 1793469660000,
-      "end": 1793790000000,
-      "created": 1793554477000,
+      "end": 1793916000000,
+      "created": 1793716666000,
       "docType": "A80"
     },
     {
@@ -7112,7 +7112,7 @@
     }
   ],
   "counts": {
-    "documents": 1360,
+    "documents": 1365,
     "matched": 50,
     "active": 40,
     "activeForced": 5

@@ -116,6 +116,34 @@ const CONFIG = {
 };
 
 const LIVE_WINDOW_DAYS = 30;   // observations_tr yalnızca ~30 gün tutar
+
+// Belçika A75 üretim karması: psrType eşlemesi backend'de yapılır; burada
+// yalnızca görünen ad, sıra ve renk tanımlıdır.
+const BE_MIX_CATEGORIES = [
+  { key: 'biomass', label: 'Biyokütle', color: '#84cc16' },
+  { key: 'wind', label: 'Rüzgar', color: '#38bdf8' },
+  { key: 'solar', label: 'Güneş', color: '#fbbf24' },
+  { key: 'nuclear', label: 'Nükleer', color: '#a78bfa' },
+  { key: 'battery', label: 'Batarya', color: '#22d3ee' },
+  { key: 'hydro', label: 'Hidrolik depolama', color: '#34d399' },
+  { key: 'gas', label: 'Gaz', color: '#f97316' },
+  { key: 'oil', label: 'Petrol', color: '#f87171' },
+  { key: 'other', label: 'Diğer (Zelzate 2 / Knippegroen)', color: '#94a3b8' }
+];
+
+// Kurulu kapasiteler (MW). Kapasite yüzdesi = anlık MW / bu değer.
+const BE_MIX_CAPACITY_MW = {
+  wind: 6000,
+  biomass: 1000,
+  solar: 12000,
+  nuclear: 2000,
+  hydro: 1000,
+  gas: 8000,
+  other: 694,
+  battery: 862,
+  oil: 477
+};
+
 // NOT: Hareketli ortalama en az CONFIG.rolling.windowDays gün ister.
 // LIVE_WINDOW_DAYS (30) bundan büyük olduğu için ek geçmiş isteği gerekmez.
 const ELAB_WINDOW_DAYS = 365;
@@ -195,6 +223,7 @@ const state = {
   plants: [],              // [{ key, label, country, zone, units, river }]
   overviewOrder: [],
   entsoe: null,            // { gen, out, genError, outError, fetchedAt }
+  mixMode: 'capacity',     // Belçika üretim karması: 'capacity' | 'share'
   busy: 0
 };
 

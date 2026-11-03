@@ -102,6 +102,22 @@ def main():
     except Exception as err:
         print(f"Warning: Failed fetching be-nuclear: {err}", file=sys.stderr)
 
+    # Belgium current generation mix (A75 per production type); overwrite only.
+    print("Fetching Belgium generation mix (A75)...")
+    try:
+        mix_payload = server.fetch_be_generation_mix()
+        if mix_payload is None:
+            print("Warning: No Belgium generation mix data returned.", file=sys.stderr)
+        else:
+            mix_file = data_dir / "be-generation-mix.json"
+            mix_file.write_text(
+                json.dumps(mix_payload, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            print(f"Wrote {mix_file}")
+    except Exception as err:
+        print(f"Warning: Failed fetching be-generation-mix: {err}", file=sys.stderr)
+
 
 if __name__ == "__main__":
     main()

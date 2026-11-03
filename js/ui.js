@@ -181,17 +181,59 @@ function beSectionHtml() {
   '</section>';
 }
 
+function beMixSectionHtml() {
+  const color = '#58A6FF';
+  return '<section class="plant-section" id="plantSection_beMix" data-plant="beMix">' +
+    '<div class="section-head">' +
+      '<div><h2>Belçika elektrik üretimi</h2>' +
+        '<p class="section-sub">' +
+          'Belçika · ENTSO-E <code>10YBE----------2</code> · anlık üretim karması (A75 · A16)' +
+        '</p></div>' +
+      '<span class="section-meta" style="color:' + color + '">BE</span>' +
+    '</div>' +
+    '<div class="grid">' +
+      '<article class="card wide" id="beMixCard">' +
+        '<div class="card-head">' +
+          '<div>' +
+            '<h2>Üretim türüne göre anlık güç</h2>' +
+            '<div class="card-source">ENTSO-E Transparency Platform (A75 · A16)</div>' +
+          '</div>' +
+          '<div class="mix-head-tools">' +
+            '<div class="mix-toggle" id="beMixMode" role="group" aria-label="Bar ölçeği">' +
+              '<button type="button" class="seg-btn is-active" data-mix-mode="capacity" aria-pressed="true">Kapasite %</button>' +
+              '<button type="button" class="seg-btn" data-mix-mode="share" aria-pressed="false">Pay %</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mix-summary">' +
+          '<div class="mix-total">' +
+            '<span class="mix-total-label">Toplam üretim</span>' +
+            '<span class="mix-total-value" id="beMixTotal">—<span class="unit">MW</span></span>' +
+          '</div>' +
+          '<div class="mix-updated" id="beMixUpdated">—</div>' +
+        '</div>' +
+        '<div class="mix-list" id="beMixList" aria-live="polite">' +
+          '<div class="mix-loading"><span class="spinner"></span> Üretim karması yükleniyor…</div>' +
+        '</div>' +
+        '<div class="mix-tooltip" id="beMixTooltip" role="tooltip" hidden></div>' +
+        '<p class="card-err" id="beMixErr" hidden></p>' +
+      '</article>' +
+    '</div>' +
+  '</section>';
+}
+
 function buildPlantSections() {
   const plants = orderedPlants();
+  const beMixHtml = beMixSectionHtml();
   const beHtml = beSectionHtml();
   const beIndex = plants.findIndex((p) => p.country === 'BE');
   let html = '';
   if (beIndex >= 0) {
     const before = plants.slice(0, beIndex).map(plantSectionHtml).join('');
     const after = plants.slice(beIndex).map(plantSectionHtml).join('');
-    html = before + beHtml + after;
+    html = before + beMixHtml + beHtml + after;
   } else {
-    html = plants.map(plantSectionHtml).join('') + beHtml;
+    html = plants.map(plantSectionHtml).join('') + beMixHtml + beHtml;
   }
   ui.plantSections.innerHTML = html;
 
@@ -1349,6 +1391,12 @@ function renderAll() {
     console.warn('[renderBeNuclearCard]', err);
   }
 
+  try {
+    renderBeMixCard();
+  } catch (err) {
+    console.warn('[renderBeMixCard]', err);
+  }
+
   orderedPlants().forEach((plant) => {
     renderPlantGenCard(plant);
     renderPlantNotices(plant);
@@ -1432,4 +1480,327 @@ function renderBeNuclearCard() {
   if (!filtered.length) {
     setCardEmpty(card, emptyEl, 'Seçilen aralıkta veri bulunamadı.');
   }
+}
+
+/* ------------------------------------------------------------------
+   Belçika A75 üretim karması (anlık, geçmiş tutulmaz)
+   ------------------------------------------------------------------ */
+const nfMixPct = new Intl.NumberFormat('tr-TR', {
+  minimumFractionDigits: 1,
+  maximumFractionDigits: 1
+});
+
+function beMixData() {
+  const mix = state.entsoe && state.entsoe.mix;
+  if (!mix || !mix.categories) return null;
+
+  const values = BE_MIX_CATEGORIES.map((cat) => {
+    const rawMw = Number(mix.categories[cat.key]);
+    const mw = Number.isFinite(rawMw) ? rawMw : 0;
+    const rawCapacity = Number(BE_MIX_CAPACITY_MW[cat.key]);
+    const capacity = Number.isFinite(rawCapacity) ? rawCapacity : 0;
+    return Object.assign({}, cat, {
+      mw,
+      capacity,
+      utilization: capacity > 0 ? (mw / capacity) * 100 : 0
+    });
+  });
+
+  const totalValue = Number(mix.total_mw);
+  const total = Number.isFinite(totalValue)
+    ? totalValue
+    : values.reduce((sum, cat) => sum + cat.mw, 0);
+
+  values.forEach((cat) => {
+    cat.share = total > 0 ? (cat.mw / total) * 100 : 0;
+  });
+
+  return { mix, total, values };
+}
+
+function beMixFillPct(cat, mode) {
+  const raw = mode === 'share' ? cat.share : cat.utilization;
+  if (!Number.isFinite(raw)) return 0;
+  return Math.max(0, Math.min(100, raw));
+}
+
+function beMixPctText(value) {
+  return Number.isFinite(value) ? nfMixPct.format(value) + '%' : '—';
+}
+
+function beMixValueHtml(cat, mode) {
+  const pct = mode === 'share' ? cat.share : cat.utilization;
+  return '<span class="mix-pct">' + beMixPctText(pct) + '</span>' +
+    '<span class="mix-mw">' + nfTick.format(cat.mw) + ' MW</span>';
+}
+
+function beMixRowHtml(cat, mode) {
+  const zero = Math.abs(cat.mw) < 0.05;
+  const width = zero ? 0 : beMixFillPct(cat, mode);
+  const classes = 'mix-row' + (zero ? ' is-off' : '') + (cat.mw < 0 ? ' is-negative' : '');
+  const status = zero
+    ? '<span class="mix-status">çalışmıyor</span>'
+    : (cat.mw < 0 ? '<span class="mix-status">şarj</span>' : '');
+
+  return '<div class="' + classes + '" data-mix-key="' + esc(cat.key) +
+      '" tabindex="0" aria-label="' + esc(cat.label) + '">' +
+    '<div class="mix-name"><span class="mix-label">' + esc(cat.label) + '</span>' +
+      status + '</div>' +
+    '<div class="mix-track" aria-hidden="true"><span class="mix-fill" data-mix-fill style="width:' +
+      width.toFixed(1) + '%;background:' + cat.color + '"></span></div>' +
+    '<div class="mix-value" data-mix-value>' + beMixValueHtml(cat, mode) + '</div>' +
+  '</div>';
+}
+
+function updateBeMixBars() {
+  const data = beMixData();
+  if (!data) return;
+
+  const mode = state.mixMode;
+  const byKey = new Map(data.values.map((cat) => [cat.key, cat]));
+  const rows = document.querySelectorAll('#beMixList .mix-row');
+
+  Array.prototype.forEach.call(rows, (row) => {
+    const cat = byKey.get(row.dataset.mixKey);
+    if (!cat) return;
+
+    const zero = Math.abs(cat.mw) < 0.05;
+    const fill = row.querySelector('[data-mix-fill]');
+    if (fill) {
+      fill.style.width = (zero ? 0 : beMixFillPct(cat, mode)).toFixed(1) + '%';
+    }
+
+    const value = row.querySelector('[data-mix-value]');
+    if (value) value.innerHTML = beMixValueHtml(cat, mode);
+
+    row.setAttribute('aria-label', cat.label + ': ' +
+      beMixPctText(mode === 'share' ? cat.share : cat.utilization) + ', ' +
+      nfTick.format(cat.mw) + ' MW');
+  });
+
+  hideBeMixTooltip();
+}
+
+function setBeMixMode(mode) {
+  if (mode !== 'capacity' && mode !== 'share') return;
+  if (state.mixMode === mode) return;
+
+  state.mixMode = mode;
+  const group = $('beMixMode');
+  if (group) {
+    Array.prototype.forEach.call(group.querySelectorAll('[data-mix-mode]'), (btn) => {
+      const active = btn.dataset.mixMode === mode;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+  updateBeMixBars();
+}
+
+function renderBeMixCard() {
+  const card = $('beMixCard');
+  const listEl = $('beMixList');
+  const totalEl = $('beMixTotal');
+  const updatedEl = $('beMixUpdated');
+  const errEl = $('beMixErr');
+  if (!card || !listEl || !totalEl || !updatedEl || !errEl) return;
+
+  showCardError(errEl, '');
+
+  const es = state.entsoe;
+  if (!es) return;
+
+  if (es.mixError) {
+    const message = entsoeErrorMessage(es.mixError);
+    fail('entsoe-be-mix', 'Belçika elektrik üretimi', message);
+    showCardError(errEl, 'Belçika üretim karması alınamadı. ' + message);
+    listEl.innerHTML = '<div class="mix-empty">Üretim karması verisi alınamadı.</div>';
+    totalEl.innerHTML = '—<span class="unit">MW</span>';
+    updatedEl.textContent = '—';
+    hideBeMixTooltip();
+    return;
+  }
+
+  clearFail('entsoe-be-mix');
+
+  const data = beMixData();
+  if (!data) {
+    listEl.innerHTML =
+      '<div class="mix-empty">Belçika üretim karması verisi henüz hazır değil.</div>';
+    totalEl.innerHTML = '—<span class="unit">MW</span>';
+    updatedEl.textContent = '—';
+    hideBeMixTooltip();
+    return;
+  }
+
+  const { mix, total, values } = data;
+
+  totalEl.innerHTML = nfMW.format(total) + '<span class="unit">MW</span>';
+  totalEl.classList.toggle('negative', total < 0);
+
+  const updatedMs = Date.parse(mix.updated || mix.fetched_at || '');
+  updatedEl.innerHTML = Number.isFinite(updatedMs)
+    ? 'Son veri: <b>' + fmtFull.format(new Date(updatedMs)) + '</b>'
+    : 'Son veri: —';
+  updatedEl.title = 'ENTSO-E A75 veri zamanı · tüm saatler Europe/Brussels';
+
+  listEl.innerHTML = values.map((cat) => beMixRowHtml(cat, state.mixMode)).join('');
+  hideBeMixTooltip();
+}
+
+/* ------------------------------------------------------------------
+   Üretim karması tooltip'i (fare + dokunma)
+   ------------------------------------------------------------------ */
+function beMixItemForRow(row) {
+  const data = beMixData();
+  if (!data || !row) return null;
+  return data.values.find((cat) => cat.key === row.dataset.mixKey) || null;
+}
+
+function positionBeMixTooltip(evt, row) {
+  const card = $('beMixCard');
+  const tip = $('beMixTooltip');
+  if (!card || !tip || tip.hidden) return;
+
+  const cardRect = card.getBoundingClientRect();
+  const rowRect = row.getBoundingClientRect();
+  const clientX = evt && Number.isFinite(evt.clientX) && evt.clientX > 0
+    ? evt.clientX
+    : rowRect.left + rowRect.width / 2;
+  const clientY = evt && Number.isFinite(evt.clientY) && evt.clientY > 0
+    ? evt.clientY
+    : rowRect.top + rowRect.height / 2;
+
+  let left = clientX - cardRect.left + 12;
+  let top = clientY - cardRect.top + 14;
+  const maxLeft = card.clientWidth - tip.offsetWidth - 8;
+  const maxTop = card.clientHeight - tip.offsetHeight - 8;
+
+  if (left > maxLeft) left = maxLeft;
+  if (top > maxTop) {
+    top = clientY - cardRect.top - tip.offsetHeight - 12;
+  }
+
+  tip.style.left = Math.max(8, left) + 'px';
+  tip.style.top = Math.max(8, top) + 'px';
+}
+
+function showBeMixTooltip(row, evt) {
+  const tip = $('beMixTooltip');
+  const cat = beMixItemForRow(row);
+  if (!tip || !cat) return;
+
+  tip.innerHTML =
+    '<div class="mix-tip-title">' + esc(cat.label) + '</div>' +
+    '<div class="mix-tip-row"><span>Anlık güç</span><b>' + nfTick.format(cat.mw) + ' MW</b></div>' +
+    '<div class="mix-tip-row"><span>Kapasite kullanımı</span><b>' + beMixPctText(cat.utilization) + '</b></div>' +
+    '<div class="mix-tip-row"><span>Üretim payı</span><b>' + beMixPctText(cat.share) + '</b></div>';
+
+  tip.dataset.mixKey = cat.key;
+  tip.hidden = false;
+
+  const list = $('beMixList');
+  if (list) {
+    Array.prototype.forEach.call(list.querySelectorAll('.mix-row.is-active'), (el) => {
+      el.classList.remove('is-active');
+    });
+  }
+  row.classList.add('is-active');
+  positionBeMixTooltip(evt, row);
+}
+
+function hideBeMixTooltip() {
+  const tip = $('beMixTooltip');
+  if (tip) {
+    tip.hidden = true;
+    delete tip.dataset.mixKey;
+  }
+  const list = $('beMixList');
+  if (list) {
+    Array.prototype.forEach.call(list.querySelectorAll('.mix-row.is-active'), (el) => {
+      el.classList.remove('is-active');
+    });
+  }
+}
+
+function initBeMixInteractions() {
+  const list = $('beMixList');
+  const toggle = $('beMixMode');
+
+  if (toggle && toggle.dataset.bound !== '1') {
+    toggle.dataset.bound = '1';
+    toggle.addEventListener('click', (evt) => {
+      const btn = evt.target.closest('[data-mix-mode]');
+      if (btn) setBeMixMode(btn.dataset.mixMode);
+    });
+  }
+
+  if (!list || list.dataset.bound === '1') return;
+  list.dataset.bound = '1';
+
+  list.addEventListener('pointerover', (evt) => {
+    if (evt.pointerType && evt.pointerType !== 'mouse') return;
+    const row = evt.target.closest('.mix-row');
+    if (row) showBeMixTooltip(row, evt);
+  });
+
+  list.addEventListener('pointermove', (evt) => {
+    if (evt.pointerType && evt.pointerType !== 'mouse') return;
+    const row = evt.target.closest('.mix-row');
+    if (row && !$('beMixTooltip').hidden) positionBeMixTooltip(evt, row);
+  });
+
+  list.addEventListener('pointerout', (evt) => {
+    if (evt.pointerType && evt.pointerType !== 'mouse') return;
+    const row = evt.target.closest('.mix-row');
+    if (!row) return;
+    const to = evt.relatedTarget;
+    if (!to || !row.contains(to)) hideBeMixTooltip();
+  });
+
+  list.addEventListener('click', (evt) => {
+    const row = evt.target.closest('.mix-row');
+    if (!row) return;
+
+    if (evt.pointerType === 'mouse') {
+      showBeMixTooltip(row, evt);
+      return;
+    }
+
+    const tip = $('beMixTooltip');
+    if (tip && !tip.hidden && tip.dataset.mixKey === row.dataset.mixKey) {
+      hideBeMixTooltip();
+    } else {
+      showBeMixTooltip(row, evt);
+    }
+  });
+
+  list.addEventListener('focusin', (evt) => {
+    const row = evt.target.closest('.mix-row');
+    if (row) showBeMixTooltip(row, null);
+  });
+
+  list.addEventListener('focusout', (evt) => {
+    const row = evt.target.closest('.mix-row');
+    if (row) hideBeMixTooltip();
+  });
+
+  list.addEventListener('keydown', (evt) => {
+    if (evt.key !== 'Enter' && evt.key !== ' ') return;
+    const row = evt.target.closest('.mix-row');
+    if (!row) return;
+    evt.preventDefault();
+    showBeMixTooltip(row, null);
+  });
+
+  document.addEventListener('pointerdown', (evt) => {
+    const tip = $('beMixTooltip');
+    if (!list.contains(evt.target) && !(tip && tip.contains(evt.target))) {
+      hideBeMixTooltip();
+    }
+  }, true);
+
+  document.addEventListener('keydown', (evt) => {
+    if (evt.key === 'Escape') hideBeMixTooltip();
+  });
 }

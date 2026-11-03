@@ -324,6 +324,110 @@
   }
   .card-err[hidden]{display:none}
 
+  /* ---------- Belçika üretim karması ---------- */
+  .mix-summary{
+    display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;
+    gap:12px;padding:4px 0 12px;margin-bottom:12px;
+    border-bottom:1px solid var(--line);
+  }
+  .mix-total{display:flex;flex-direction:column;gap:2px}
+  .mix-total-label{
+    font-size:11px;font-weight:600;letter-spacing:.8px;text-transform:uppercase;
+    color:var(--muted);
+  }
+  .mix-total-value{
+    display:flex;align-items:baseline;gap:7px;
+    font-size:clamp(1.8rem,4.5vw,2.5rem);font-weight:720;line-height:1;
+    letter-spacing:-1px;font-family:"JetBrains Mono",monospace;
+    font-variant-numeric:tabular-nums;color:var(--power);
+  }
+  .mix-total-value .unit{
+    font-size:.8rem;font-weight:600;letter-spacing:0;color:var(--muted);
+    font-family:"Inter",sans-serif;
+  }
+  .mix-total-value.negative{color:var(--bad)}
+  .mix-updated{
+    font-size:.72rem;line-height:1.5;color:var(--muted);
+    font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;
+    text-align:right;margin-left:auto;
+  }
+  .mix-updated b{color:var(--text);font-weight:600}
+  .mix-head-tools{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px}
+  .mix-toggle{
+    display:inline-flex;gap:3px;padding:3px;border-radius:2px;
+    border:1px solid var(--line);background:var(--bg);
+  }
+  .mix-toggle .seg-btn{
+    padding:5px 9px;font-size:10px;line-height:1.2;
+    letter-spacing:.4px;text-transform:uppercase;white-space:nowrap;
+  }
+  .mix-list{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    gap:9px 18px;
+  }
+  .mix-row{
+    display:grid;grid-template-columns:minmax(120px,auto) minmax(80px,1fr) 90px;
+    align-items:center;gap:10px;min-width:0;
+    border-radius:2px;
+  }
+  .mix-name{display:flex;flex-direction:column;gap:1px;min-width:0}
+  .mix-label{
+    font-size:.78rem;font-weight:600;line-height:1.2;color:var(--text);
+    overflow-wrap:anywhere;
+  }
+  .mix-status{
+    font-size:10px;font-weight:600;line-height:1.2;letter-spacing:.4px;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .mix-row.is-off .mix-label{color:var(--muted)}
+  .mix-row.is-off .mix-track{opacity:.55}
+  .mix-track{
+    height:8px;border-radius:2px;overflow:hidden;background:var(--line);
+    transition:box-shadow .15s ease;
+  }
+  .mix-fill{
+    display:block;height:100%;border-radius:2px;
+    transition:width .35s cubic-bezier(.2,.8,.2,1), opacity .2s ease;
+  }
+  .mix-row.is-active .mix-label{color:var(--power)}
+  .mix-row.is-active .mix-track{box-shadow:0 0 0 1px var(--power)}
+  .mix-value{
+    display:flex;flex-direction:column;align-items:flex-end;gap:1px;
+    text-align:right;line-height:1.15;white-space:nowrap;
+  }
+  .mix-pct{
+    font-size:.82rem;font-weight:680;color:var(--text);
+    font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;
+  }
+  .mix-mw{
+    font-size:.62rem;font-weight:500;color:var(--muted);
+    font-family:"Inter",sans-serif;
+  }
+  .mix-row.is-negative .mix-pct{color:var(--bad)}
+  .mix-row.is-negative .mix-fill{opacity:.7}
+  .mix-loading,.mix-empty{
+    grid-column:1/-1;display:flex;align-items:center;gap:9px;
+    padding:12px 0;font-size:.8rem;color:var(--muted);
+  }
+  .mix-tooltip{
+    position:absolute;z-index:20;min-width:190px;max-width:270px;
+    padding:8px 10px;border:1px solid var(--line);border-radius:2px;
+    background:var(--bg);box-shadow:0 10px 28px rgba(0,0,0,.45);
+    pointer-events:none;font-size:.72rem;line-height:1.45;color:var(--muted);
+  }
+  .mix-tooltip[hidden]{display:none}
+  .mix-tip-title{
+    font-size:.75rem;font-weight:650;color:var(--text);margin-bottom:5px;
+  }
+  .mix-tip-row{
+    display:flex;align-items:baseline;justify-content:space-between;
+    gap:16px;white-space:nowrap;
+  }
+  .mix-tip-row b{
+    color:var(--text);font-weight:650;
+    font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;
+  }
+
   footer{
     margin-top:28px;font-size:.72rem;color:var(--muted);line-height:1.7;
     text-align:center;
@@ -657,6 +761,9 @@
 
     .section-head{align-items:flex-start}
     .reactor-net{font-size:1.8rem}
+    .mix-list{grid-template-columns:1fr;gap:9px}
+    .mix-row{grid-template-columns:minmax(95px,auto) minmax(60px,1fr) 80px;gap:8px}
+    .mix-updated{text-align:left;margin-left:0}
     .notice-mw{margin-left:0;flex-basis:100%}
     .card-head .toggle{order:3;flex-basis:100%;margin-top:6px;margin-left:0;padding:6px 0}
     .card-head .toggle input{width:16px;height:16px}

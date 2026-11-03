@@ -167,7 +167,9 @@ async function loadEntsoe(opts) {
     fetchedAt: Date.now(),
     beNuclearTotal: null,
     beAttribution: null,
-    beNuclearSeries: []
+    beNuclearSeries: [],
+    mix: null,
+    mixError: null
   };
 
   const [genResult, outResult] = await Promise.allSettled([
@@ -213,6 +215,18 @@ async function loadEntsoe(opts) {
   } catch (err) {
     console.warn('[BE nuclear series fetch]', err);
     entry.beNuclearSeries = [];
+  }
+
+  // A75 Belçika üretim karması (anlık). Diğer yüklemeleri engellemez.
+  try {
+    entry.mix = await fetchEntsoe('/api/entsoe/be-generation-mix');
+    if (entry.mix && entry.mix.categories) {
+      console.log('[BE generation mix] ' + Object.keys(entry.mix.categories).length +
+        ' kategori · ' + (entry.mix.updated || 'tarih yok'));
+    }
+  } catch (err) {
+    entry.mixError = err;
+    console.warn('[BE generation mix fetch]', err);
   }
 
   // Belçika atribyüsiyonunu hesapla (kendi try/catch bloğunda, hiçbir şeyi engellemez):

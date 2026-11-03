@@ -226,6 +226,7 @@ async function init() {
   // Santral bölümleri backend yapılandırmasından üretilir; nehir paneli
   // Chooz bölümüne taşındıktan sonra grafikler kurulur.
   await loadPlants();
+  initBeMixInteractions();
   initCharts();
   initPlantCharts();
 

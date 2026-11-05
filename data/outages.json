@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 1082,
+      "documents": 1074,
       "matched": 11
     },
     "BE": {
@@ -114,15 +114,15 @@
         "tihange",
         "doel"
       ],
-      "documents": 293,
+      "documents": 288,
       "matched": 39
     }
   },
-  "from": "2026-10-05",
-  "to": "2026-11-12",
-  "fromTs": 1791158400000,
-  "toTs": 1794441600000,
-  "fetchedAt": 1793836562967,
+  "from": "2026-10-06",
+  "to": "2026-11-13",
+  "fromTs": 1791244800000,
+  "toTs": 1794528000000,
+  "fetchedAt": 1793860697748,
   "notices": [
     {
       "id": "PK6y4psB_8-lNI3i0tI6Xw",
@@ -7112,7 +7112,7 @@
     }
   ],
   "counts": {
-    "documents": 1375,
+    "documents": 1362,
     "matched": 50,
     "active": 40,
     "activeForced": 5

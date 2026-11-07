@@ -104,6 +104,9 @@ function plantSectionHtml(plant) {
   const riverHost = plant.river
     ? '<div class="river-host" data-river-host="' + key + '"></div>'
     : '';
+  const weatherHost = plant.key === 'chooz'
+    ? '<div class="weather-host" data-weather-host="' + key + '"></div>'
+    : '';
 
   return '<section class="plant-section" id="plantSection_' + key + '" data-plant="' + key + '">' +
     '<div class="section-head">' +
@@ -146,6 +149,7 @@ function plantSectionHtml(plant) {
         '<p class="card-err" id="noticeErr_' + key + '" hidden></p>' +
       '</article>' +
     '</div>' +
+    weatherHost +
     riverHost +
   '</section>';
 }
@@ -222,19 +226,111 @@ function beMixSectionHtml() {
   '</section>';
 }
 
+function frMixSectionHtml() {
+  const color = '#58A6FF';
+  return '<section class="plant-section" id="plantSection_frMix" data-plant="frMix">' +
+    '<div class="section-head">' +
+      '<div><h2>Fransa elektrik üretimi</h2>' +
+        '<p class="section-sub">' +
+          'Fransa · ENTSO-E <code>10YFR-RTE------C</code> · anlık üretim karması (A75 · A16)' +
+        '</p></div>' +
+      '<span class="section-meta" style="color:' + color + '">FR</span>' +
+    '</div>' +
+    '<div class="grid">' +
+      '<article class="card wide" id="frMixCard">' +
+        '<div class="card-head">' +
+          '<div>' +
+            '<h2>Üretim türüne göre anlık güç</h2>' +
+            '<div class="card-source">ENTSO-E Transparency Platform (A75 · A16)</div>' +
+          '</div>' +
+          '<div class="mix-head-tools">' +
+            '<div class="mix-toggle" id="frMixMode" role="group" aria-label="Bar ölçeği">' +
+              '<button type="button" class="seg-btn is-active" data-mix-mode="capacity" aria-pressed="true">Kapasite %</button>' +
+              '<button type="button" class="seg-btn" data-mix-mode="share" aria-pressed="false">Pay %</button>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="mix-summary">' +
+          '<div class="mix-total">' +
+            '<span class="mix-total-label">Toplam üretim</span>' +
+            '<span class="mix-total-value" id="frMixTotal">—<span class="unit">MW</span></span>' +
+          '</div>' +
+          '<div class="mix-updated" id="frMixUpdated">—</div>' +
+        '</div>' +
+        '<div class="mix-list" id="frMixList" aria-live="polite">' +
+          '<div class="mix-loading"><span class="spinner"></span> Üretim karması yükleniyor…</div>' +
+        '</div>' +
+        '<div class="mix-tooltip" id="frMixTooltip" role="tooltip" hidden></div>' +
+        '<p class="card-err" id="frMixErr" hidden></p>' +
+      '</article>' +
+    '</div>' +
+  '</section>';
+}
+
+function weatherSectionHtml() {
+  return '<section class="weather-panel" id="weatherPanel" aria-live="polite">' +
+    '<div class="section-head weather-head">' +
+      '<div><h2>Chooz Bölgesi Hava Durumu</h2>' +
+        '<p class="section-sub">Open-Meteo · 50.09°N, 4.79°E · Europe/Brussels</p>' +
+      '</div>' +
+      '<span class="section-meta" id="weatherMeta">—</span>' +
+    '</div>' +
+    '<div class="card weather-now-card">' +
+      '<div class="weather-current">' +
+        '<div class="weather-now">' +
+          '<span class="weather-temp" id="weatherTemp">—<span class="unit">°C</span></span>' +
+          '<span class="weather-condition">' +
+            '<span class="weather-icon" id="weatherIcon">·</span>' +
+            '<span id="weatherCondition">—</span>' +
+          '</span>' +
+        '</div>' +
+        '<div class="weather-metrics">' +
+          '<span class="weather-metric"><span>Nem</span><b id="weatherHumidity">—</b></span>' +
+          '<span class="weather-metric"><span>Rüzgar</span><b id="weatherWind">—</b></span>' +
+          '<span class="weather-metric"><span>Yağış</span><b id="weatherPrecip">—</b></span>' +
+        '</div>' +
+      '</div>' +
+      '<p class="card-err" id="weatherErr" hidden></p>' +
+      '<div class="weather-forecast" id="weatherForecast">' +
+        '<div class="weather-loading"><span class="spinner"></span> Hava durumu yükleniyor…</div>' +
+      '</div>' +
+    '</div>' +
+    '<div class="card weather-chart-card" id="weatherChartCard">' +
+      '<div class="card-head">' +
+        '<div>' +
+          '<h2>Yağış ve Debi Korelasyonu</h2>' +
+          '<div class="card-source">Open-Meteo yağış · Hub\'Eau debi (son 30 gün)</div>' +
+        '</div>' +
+        '<span class="tag">mm / m³/s</span>' +
+      '</div>' +
+      '<div class="chart-box weather-chart-box">' +
+        '<canvas id="weatherChart" role="img" aria-label="Son 30 gün yağış ve debi korelasyon grafiği"></canvas>' +
+        '<div class="chart-empty" id="weatherEmpty"></div>' +
+      '</div>' +
+      '<div class="card-foot" id="weatherFoot"></div>' +
+    '</div>' +
+  '</section>';
+}
+
 function buildPlantSections() {
   const plants = orderedPlants();
   const beMixHtml = beMixSectionHtml();
   const beHtml = beSectionHtml();
+  const frMixHtml = frMixSectionHtml();
   const beIndex = plants.findIndex((p) => p.country === 'BE');
-  let html = '';
-  if (beIndex >= 0) {
-    const before = plants.slice(0, beIndex).map(plantSectionHtml).join('');
-    const after = plants.slice(beIndex).map(plantSectionHtml).join('');
-    html = before + beMixHtml + beHtml + after;
-  } else {
-    html = plants.map(plantSectionHtml).join('') + beMixHtml + beHtml;
-  }
+  const choozIndex = plants.findIndex((p) => p.key === 'chooz');
+
+  // Fransa karması Chooz bölümünden hemen önce, Belçika karması ise ilk
+  // Belçika santralinden önce gösterilir.
+  let html = plants.map((plant, index) => {
+    let out = '';
+    if (index === choozIndex) out += frMixHtml;
+    if (index === beIndex) out += beMixHtml + beHtml;
+    return out + plantSectionHtml(plant);
+  }).join('');
+  if (beIndex < 0) html += beMixHtml + beHtml;
+  if (choozIndex < 0) html = frMixHtml + html;
+
   ui.plantSections.innerHTML = html;
 
   // Nehir paneli tek örnektir: ilk nehirli santralin (Chooz) altına taşınır.
@@ -246,6 +342,11 @@ function buildPlantSections() {
     if (host) host.appendChild(ui.riverPanel);
   }
   ui.riverSource.hidden = true;
+
+  // Hava durumu bölümü Chooz üretim grafiği ile nehir paneli arasına girer.
+  const weatherHost = ui.plantSections.querySelector('[data-weather-host="chooz"]');
+  if (weatherHost) weatherHost.innerHTML = weatherSectionHtml();
+
   ui.reactorGrid.innerHTML =
     '<div class="reactor-loading"><span class="spinner"></span> Reaktör verisi yükleniyor…</div>';
 }
@@ -802,6 +903,17 @@ function renderTopStrip(units, genUnits, notices, now, es) {
     '<span class="top-strip-item">DEBİ: <b>' + dischargeText + ' m³/s</b></span>';
 }
 
+/** Reaktör net gücünün nominal kapasiteye oranı için nominal MW değeri. */
+function unitNominalMW(unit, snap) {
+  if (unit && Number.isFinite(unit.nominalMW)) return unit.nominalMW;
+  const key = unit && unit.key;
+  if (key === 'chooz1' || key === 'chooz2') return 1500;
+  if (key === 'doel4') return 1033;
+  if (key === 'tihange3') return 1038;
+  if (snap && Number.isFinite(snap.installedMW)) return snap.installedMW;
+  return 0;
+}
+
 function renderReactors() {
   if (!ui.reactorGrid) return;
 
@@ -872,6 +984,17 @@ function renderReactors() {
     const netHtml = displayMW == null
       ? 'üretim verisi yok'
       : nfMW.format(displayMW) + ' <span class="unit">MW net</span>';
+
+    // Kapasite kullanımı: net MW / kurulu nominal MW.
+    const nominalMW = unitNominalMW(unit, snap);
+    const capPct = displayMW != null && Number.isFinite(displayMW) && nominalMW > 0
+      ? Math.max(0, Math.min(100, (displayMW / nominalMW) * 100))
+      : 0;
+    const capColor = capPct >= 80 ? 'var(--ok)' : capPct >= 20 ? 'var(--power)' : 'var(--bad)';
+    const capHtml = '<div class="reactor-cap" role="img" aria-label="Kapasite kullanımı ' +
+      Math.round(capPct) + '%">' +
+      '<div class="reactor-cap-fill" style="width:' + capPct.toFixed(1) +
+      '%;background:' + capColor + '"></div></div>';
     let availHtml = '—';
     if (snap.scheduledMW != null) {
       availHtml = nfMW.format(snap.scheduledMW) + '<small>MW</small>';
@@ -941,6 +1064,7 @@ function renderReactors() {
         '<span class="status-plain ' + statusClass + '">' + esc(statusText) + '</span>' +
       '</div>' +
       '<div class="reactor-net' + netClass + '">' + netHtml + '</div>' +
+      capHtml +
       partialNoteHtml +
       '<div class="reactor-metrics">' +
         '<div class="reactor-metric">' +
@@ -1347,7 +1471,7 @@ function renderCompareCard() {
       pointRadius: 0,
       pointHoverRadius: 4,
       pointHoverBackgroundColor: color,
-      pointHoverBorderColor: '#0a1120',
+      pointHoverBorderColor: '#12171E',
       pointHoverBorderWidth: 2,
       tension: 0.2,
       fill: false,
@@ -1395,6 +1519,18 @@ function renderAll() {
     renderBeMixCard();
   } catch (err) {
     console.warn('[renderBeMixCard]', err);
+  }
+
+  try {
+    renderFrMixCard();
+  } catch (err) {
+    console.warn('[renderFrMixCard]', err);
+  }
+
+  try {
+    renderWeather();
+  } catch (err) {
+    console.warn('[renderWeather]', err);
   }
 
   orderedPlants().forEach((plant) => {
@@ -1803,4 +1939,491 @@ function initBeMixInteractions() {
   document.addEventListener('keydown', (evt) => {
     if (evt.key === 'Escape') hideBeMixTooltip();
   });
+}
+
+/* ------------------------------------------------------------------
+   Fransa A75 üretim karması (anlık, geçmiş tutulmaz)
+   ------------------------------------------------------------------ */
+function frMixData() {
+  const mix = state.entsoe && state.entsoe.frMix;
+  if (!mix || !mix.categories) return null;
+
+  const values = FR_MIX_CATEGORIES.map((cat) => {
+    const rawMw = Number(mix.categories[cat.key]);
+    const mw = Number.isFinite(rawMw) ? rawMw : 0;
+    const rawCapacity = Number(FR_MIX_CAPACITY_MW[cat.key]);
+    const capacity = Number.isFinite(rawCapacity) ? rawCapacity : 0;
+    return Object.assign({}, cat, {
+      mw,
+      capacity,
+      utilization: capacity > 0 ? (mw / capacity) * 100 : 0
+    });
+  });
+
+  const totalValue = Number(mix.total_mw);
+  const total = Number.isFinite(totalValue)
+    ? totalValue
+    : values.reduce((sum, cat) => sum + cat.mw, 0);
+
+  values.forEach((cat) => {
+    cat.share = total > 0 ? (cat.mw / total) * 100 : 0;
+  });
+
+  return { mix, total, values };
+}
+
+function frMixFillPct(cat, mode) {
+  const raw = mode === 'share' ? cat.share : cat.utilization;
+  if (!Number.isFinite(raw)) return 0;
+  return Math.max(0, Math.min(100, raw));
+}
+
+function frMixPctText(value) {
+  return Number.isFinite(value) ? nfMixPct.format(value) + '%' : '—';
+}
+
+function frMixValueHtml(cat, mode) {
+  const pct = mode === 'share' ? cat.share : cat.utilization;
+  return '<span class="mix-pct">' + frMixPctText(pct) + '</span>' +
+    '<span class="mix-mw">' + nfTick.format(cat.mw) + ' MW</span>';
+}
+
+function frMixRowHtml(cat, mode) {
+  const zero = Math.abs(cat.mw) < 0.05;
+  const width = zero ? 0 : frMixFillPct(cat, mode);
+  const classes = 'mix-row' + (zero ? ' is-off' : '') + (cat.mw < 0 ? ' is-negative' : '');
+  const status = zero
+    ? '<span class="mix-status">çalışmıyor</span>'
+    : (cat.mw < 0 ? '<span class="mix-status">şarj</span>' : '');
+
+  return '<div class="' + classes + '" data-mix-key="' + esc(cat.key) +
+      '" tabindex="0" aria-label="' + esc(cat.label) + '">' +
+    '<div class="mix-name"><span class="mix-label">' + esc(cat.label) + '</span>' +
+      status + '</div>' +
+    '<div class="mix-track" aria-hidden="true"><span class="mix-fill" data-mix-fill style="width:' +
+      width.toFixed(1) + '%;background:' + cat.color + '"></span></div>' +
+    '<div class="mix-value" data-mix-value>' + frMixValueHtml(cat, mode) + '</div>' +
+  '</div>';
+}
+
+function updateFrMixBars() {
+  const data = frMixData();
+  if (!data) return;
+
+  const mode = state.frMixMode;
+  const byKey = new Map(data.values.map((cat) => [cat.key, cat]));
+  const rows = document.querySelectorAll('#frMixList .mix-row');
+
+  Array.prototype.forEach.call(rows, (row) => {
+    const cat = byKey.get(row.dataset.mixKey);
+    if (!cat) return;
+
+    const zero = Math.abs(cat.mw) < 0.05;
+    const fill = row.querySelector('[data-mix-fill]');
+    if (fill) {
+      fill.style.width = (zero ? 0 : frMixFillPct(cat, mode)).toFixed(1) + '%';
+    }
+
+    const value = row.querySelector('[data-mix-value]');
+    if (value) value.innerHTML = frMixValueHtml(cat, mode);
+
+    row.setAttribute('aria-label', cat.label + ': ' +
+      frMixPctText(mode === 'share' ? cat.share : cat.utilization) + ', ' +
+      nfTick.format(cat.mw) + ' MW');
+  });
+
+  hideFrMixTooltip();
+}
+
+function setFrMixMode(mode) {
+  if (mode !== 'capacity' && mode !== 'share') return;
+  if (state.frMixMode === mode) return;
+
+  state.frMixMode = mode;
+  const group = $('frMixMode');
+  if (group) {
+    Array.prototype.forEach.call(group.querySelectorAll('[data-mix-mode]'), (btn) => {
+      const active = btn.dataset.mixMode === mode;
+      btn.classList.toggle('is-active', active);
+      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+  }
+  updateFrMixBars();
+}
+
+function renderFrMixCard() {
+  const card = $('frMixCard');
+  const listEl = $('frMixList');
+  const totalEl = $('frMixTotal');
+  const updatedEl = $('frMixUpdated');
+  const errEl = $('frMixErr');
+  if (!card || !listEl || !totalEl || !updatedEl || !errEl) return;
+
+  showCardError(errEl, '');
+
+  const es = state.entsoe;
+  if (!es) return;
+
+  if (es.frMixError) {
+    const message = entsoeErrorMessage(es.frMixError);
+    fail('entsoe-fr-mix', 'Fransa elektrik üretimi', message);
+    showCardError(errEl, 'Fransa üretim karması alınamadı. ' + message);
+    listEl.innerHTML = '<div class="mix-empty">Üretim karması verisi alınamadı.</div>';
+    totalEl.innerHTML = '—<span class="unit">MW</span>';
+    updatedEl.textContent = '—';
+    hideFrMixTooltip();
+    return;
+  }
+
+  clearFail('entsoe-fr-mix');
+
+  const data = frMixData();
+  if (!data) {
+    listEl.innerHTML =
+      '<div class="mix-empty">Fransa üretim karması verisi henüz hazır değil.</div>';
+    totalEl.innerHTML = '—<span class="unit">MW</span>';
+    updatedEl.textContent = '—';
+    hideFrMixTooltip();
+    return;
+  }
+
+  const { mix, total, values } = data;
+
+  totalEl.innerHTML = nfMW.format(total) + '<span class="unit">MW</span>';
+  totalEl.classList.toggle('negative', total < 0);
+
+  const updatedMs = Date.parse(mix.updated || mix.fetched_at || '');
+  updatedEl.innerHTML = Number.isFinite(updatedMs)
+    ? 'Son veri: <b>' + fmtFull.format(new Date(updatedMs)) + '</b>'
+    : 'Son veri: —';
+  updatedEl.title = 'ENTSO-E A75 veri zamanı · tüm saatler Europe/Brussels';
+
+  listEl.innerHTML = values.map((cat) => frMixRowHtml(cat, state.frMixMode)).join('');
+  hideFrMixTooltip();
+}
+
+/* ------------------------------------------------------------------
+   Fransa üretim karması tooltip'i (fare + dokunma)
+   ------------------------------------------------------------------ */
+function frMixItemForRow(row) {
+  const data = frMixData();
+  if (!data || !row) return null;
+  return data.values.find((cat) => cat.key === row.dataset.mixKey) || null;
+}
+
+function positionFrMixTooltip(evt, row) {
+  const card = $('frMixCard');
+  const tip = $('frMixTooltip');
+  if (!card || !tip || tip.hidden) return;
+
+  const cardRect = card.getBoundingClientRect();
+  const rowRect = row.getBoundingClientRect();
+  const clientX = evt && Number.isFinite(evt.clientX) && evt.clientX > 0
+    ? evt.clientX
+    : rowRect.left + rowRect.width / 2;
+  const clientY = evt && Number.isFinite(evt.clientY) && evt.clientY > 0
+    ? evt.clientY
+    : rowRect.top + rowRect.height / 2;
+
+  let left = clientX - cardRect.left + 12;
+  let top = clientY - cardRect.top + 14;
+  const maxLeft = card.clientWidth - tip.offsetWidth - 8;
+  const maxTop = card.clientHeight - tip.offsetHeight - 8;
+
+  if (left > maxLeft) left = maxLeft;
+  if (top > maxTop) {
+    top = clientY - cardRect.top - tip.offsetHeight - 12;
+  }
+
+  tip.style.left = Math.max(8, left) + 'px';
+  tip.style.top = Math.max(8, top) + 'px';
+}
+
+function showFrMixTooltip(row, evt) {
+  const tip = $('frMixTooltip');
+  const cat = frMixItemForRow(row);
+  if (!tip || !cat) return;
+
+  tip.innerHTML =
+    '<div class="mix-tip-title">' + esc(cat.label) + '</div>' +
+    '<div class="mix-tip-row"><span>Anlık güç</span><b>' + nfTick.format(cat.mw) + ' MW</b></div>' +
+    '<div class="mix-tip-row"><span>Kapasite kullanımı</span><b>' + frMixPctText(cat.utilization) + '</b></div>' +
+    '<div class="mix-tip-row"><span>Üretim payı</span><b>' + frMixPctText(cat.share) + '</b></div>';
+
+  tip.dataset.mixKey = cat.key;
+  tip.hidden = false;
+
+  const list = $('frMixList');
+  if (list) {
+    Array.prototype.forEach.call(list.querySelectorAll('.mix-row.is-active'), (el) => {
+      el.classList.remove('is-active');
+    });
+  }
+  row.classList.add('is-active');
+  positionFrMixTooltip(evt, row);
+}
+
+function hideFrMixTooltip() {
+  const tip = $('frMixTooltip');
+  if (tip) {
+    tip.hidden = true;
+    delete tip.dataset.mixKey;
+  }
+  const list = $('frMixList');
+  if (list) {
+    Array.prototype.forEach.call(list.querySelectorAll('.mix-row.is-active'), (el) => {
+      el.classList.remove('is-active');
+    });
+  }
+}
+
+function initFrMixInteractions() {
+  const list = $('frMixList');
+  const toggle = $('frMixMode');
+
+  if (toggle && toggle.dataset.bound !== '1') {
+    toggle.dataset.bound = '1';
+    toggle.addEventListener('click', (evt) => {
+      const btn = evt.target.closest('[data-mix-mode]');
+      if (btn) setFrMixMode(btn.dataset.mixMode);
+    });
+  }
+
+  if (!list || list.dataset.bound === '1') return;
+  list.dataset.bound = '1';
+
+  list.addEventListener('pointerover', (evt) => {
+    if (evt.pointerType && evt.pointerType !== 'mouse') return;
+    const row = evt.target.closest('.mix-row');
+    if (row) showFrMixTooltip(row, evt);
+  });
+
+  list.addEventListener('pointermove', (evt) => {
+    if (evt.pointerType && evt.pointerType !== 'mouse') return;
+    const row = evt.target.closest('.mix-row');
+    if (row && !$('frMixTooltip').hidden) positionFrMixTooltip(evt, row);
+  });
+
+  list.addEventListener('pointerout', (evt) => {
+    if (evt.pointerType && evt.pointerType !== 'mouse') return;
+    const row = evt.target.closest('.mix-row');
+    if (!row) return;
+    const to = evt.relatedTarget;
+    if (!to || !row.contains(to)) hideFrMixTooltip();
+  });
+
+  list.addEventListener('click', (evt) => {
+    const row = evt.target.closest('.mix-row');
+    if (!row) return;
+
+    if (evt.pointerType === 'mouse') {
+      showFrMixTooltip(row, evt);
+      return;
+    }
+
+    const tip = $('frMixTooltip');
+    if (tip && !tip.hidden && tip.dataset.mixKey === row.dataset.mixKey) {
+      hideFrMixTooltip();
+    } else {
+      showFrMixTooltip(row, evt);
+    }
+  });
+
+  list.addEventListener('focusin', (evt) => {
+    const row = evt.target.closest('.mix-row');
+    if (row) showFrMixTooltip(row, null);
+  });
+
+  list.addEventListener('focusout', (evt) => {
+    const row = evt.target.closest('.mix-row');
+    if (row) hideFrMixTooltip();
+  });
+
+  list.addEventListener('keydown', (evt) => {
+    if (evt.key !== 'Enter' && evt.key !== ' ') return;
+    const row = evt.target.closest('.mix-row');
+    if (!row) return;
+    evt.preventDefault();
+    showFrMixTooltip(row, null);
+  });
+
+  document.addEventListener('pointerdown', (evt) => {
+    const tip = $('frMixTooltip');
+    if (!list.contains(evt.target) && !(tip && tip.contains(evt.target))) {
+      hideFrMixTooltip();
+    }
+  }, true);
+
+  document.addEventListener('keydown', (evt) => {
+    if (evt.key === 'Escape') hideFrMixTooltip();
+  });
+}
+
+/* ------------------------------------------------------------------
+   Chooz bölgesi hava durumu ve yağış/debi korelasyonu
+   ------------------------------------------------------------------ */
+function renderWeather() {
+  const panel = $('weatherPanel');
+  if (!panel) return;
+
+  const weather = state.weather;
+  if (!weather) return;
+
+  const errEl = $('weatherErr');
+  const forecastEl = $('weatherForecast');
+  const tempEl = $('weatherTemp');
+  const iconEl = $('weatherIcon');
+  const conditionEl = $('weatherCondition');
+  const humidityEl = $('weatherHumidity');
+  const windEl = $('weatherWind');
+  const precipEl = $('weatherPrecip');
+  const metaEl = $('weatherMeta');
+
+  const hasData = !!(weather.current || weather.daily || weather.hourly);
+  if (!hasData) {
+    const message = weather.error || 'Hava durumu verisi alınamadı.';
+    if (errEl) {
+      errEl.textContent = 'Hava durumu alınamadı. ' + message;
+      errEl.hidden = false;
+    }
+    if (forecastEl) {
+      forecastEl.innerHTML = '<div class="weather-empty">Tahmin verisi yok.</div>';
+    }
+    if (tempEl) tempEl.innerHTML = '—<span class="unit">°C</span>';
+    if (iconEl) iconEl.textContent = '·';
+    if (conditionEl) conditionEl.textContent = '—';
+    if (humidityEl) humidityEl.textContent = '—';
+    if (windEl) windEl.textContent = '—';
+    if (precipEl) precipEl.textContent = '—';
+    if (metaEl) metaEl.textContent = '—';
+    renderWeatherChart(weather);
+    return;
+  }
+
+  if (errEl) {
+    errEl.hidden = true;
+    errEl.textContent = '';
+  }
+
+  const current = weather.current || null;
+  if (current) {
+    const temp = Number(current.temperature_2m);
+    if (tempEl) {
+      tempEl.innerHTML = (Number.isFinite(temp) ? nfTick.format(temp) : '—') +
+        '<span class="unit">°C</span>';
+    }
+    if (iconEl) iconEl.textContent = weatherIcon(current.weather_code);
+    if (conditionEl) conditionEl.textContent = weatherLabel(current.weather_code);
+
+    const humidity = Number(current.relative_humidity_2m);
+    if (humidityEl) {
+      humidityEl.textContent = Number.isFinite(humidity) ? Math.round(humidity) + '%' : '—';
+    }
+    const wind = Number(current.wind_speed_10m);
+    if (windEl) {
+      windEl.textContent = Number.isFinite(wind) ? nfTick.format(wind) + ' km/h' : '—';
+    }
+    const precip = Number(current.precipitation);
+    if (precipEl) {
+      precipEl.textContent = Number.isFinite(precip) ? nfTick.format(precip) + ' mm' : '—';
+    }
+    if (metaEl) {
+      const time = String(current.time || '');
+      metaEl.textContent = time ? time.slice(0, 16).replace('T', ' ') + ' · Brüksel' : '—';
+    }
+  } else {
+    if (tempEl) tempEl.innerHTML = '—<span class="unit">°C</span>';
+    if (iconEl) iconEl.textContent = '·';
+    if (conditionEl) conditionEl.textContent = '—';
+    if (humidityEl) humidityEl.textContent = '—';
+    if (windEl) windEl.textContent = '—';
+    if (precipEl) precipEl.textContent = '—';
+    if (metaEl) metaEl.textContent = '—';
+  }
+
+  const daily = weather.daily;
+  if (forecastEl && daily && Array.isArray(daily.time) && daily.time.length) {
+    forecastEl.innerHTML = daily.time.slice(0, 5).map((day, index) => {
+      const code = daily.weather_code ? daily.weather_code[index] : 0;
+      const max = Number(daily.temperature_2m_max ? daily.temperature_2m_max[index] : NaN);
+      const min = Number(daily.temperature_2m_min ? daily.temperature_2m_min[index] : NaN);
+      const rain = Number(daily.precipitation_sum ? daily.precipitation_sum[index] : NaN);
+
+      return '<div class="weather-day">' +
+        '<span class="weather-day-name">' + esc(weatherDayLabel(day, index)) + '</span>' +
+        '<span class="weather-day-icon" title="' + esc(weatherLabel(code)) + '">' +
+          weatherIcon(code) + '</span>' +
+        '<span class="weather-day-temps"><b>' +
+          (Number.isFinite(max) ? Math.round(max) + '°' : '—') + '</b><span>' +
+          (Number.isFinite(min) ? Math.round(min) + '°' : '—') + '</span></span>' +
+        '<span class="weather-day-rain">' +
+          (Number.isFinite(rain) ? nfTick.format(rain) + ' mm' : '—') + '</span>' +
+      '</div>';
+    }).join('');
+  } else if (forecastEl) {
+    forecastEl.innerHTML = '<div class="weather-empty">Tahmin verisi yok.</div>';
+  }
+
+  renderWeatherChart(weather);
+}
+
+function renderWeatherChart(weather) {
+  const chart = charts.weather;
+  const card = $('weatherChartCard');
+  const emptyEl = $('weatherEmpty');
+  const footEl = $('weatherFoot');
+  if (!chart || !card || !emptyEl || !footEl) return;
+
+  setCardEmpty(card, emptyEl, null);
+
+  const now = Date.now();
+  const from = now - 30 * DAY;
+  const to = now + DAY;
+
+  const precipitation = [];
+  const hourly = weather && weather.hourly;
+  if (hourly && Array.isArray(hourly.time) && Array.isArray(hourly.precipitation)) {
+    for (let i = 0; i < hourly.time.length; i += 1) {
+      const x = weatherTimeToMs(hourly.time[i]);
+      const y = Number(hourly.precipitation[i]);
+      if (Number.isFinite(x) && Number.isFinite(y) && x >= from && x <= to) {
+        precipitation.push({ x, y });
+      }
+    }
+  }
+
+  const live = state.live.get(state.code) || null;
+  const qPoints = live && live.q && Array.isArray(live.q.points) ? live.q.points : [];
+  const discharge = qPoints.filter((p) =>
+    Number.isFinite(p.x) && Number.isFinite(p.y) && p.x >= from && p.x <= to
+  );
+
+  chart.data.datasets[0].data = precipitation;
+  chart.data.datasets[1].data = discharge.length
+    ? withGaps(discharge, CONFIG.gaps.breakMs)
+    : [];
+
+  if (!precipitation.length && !discharge.length) {
+    chart.data.datasets.forEach((ds) => { ds.data = []; });
+    chart.update('none');
+    footEl.innerHTML = '';
+    setCardEmpty(card, emptyEl, 'Son 30 gün için yağış/debi verisi bulunamadı.');
+    return;
+  }
+
+  chart.$tickFmt = tickFormatterForSpan(30 * DAY);
+  chart.update('none');
+
+  let totalRain = 0;
+  precipitation.forEach((p) => { totalRain += p.y; });
+  let qSum = 0;
+  discharge.forEach((p) => { qSum += p.y; });
+  const qAvg = discharge.length ? qSum / discharge.length : null;
+
+  footEl.innerHTML =
+    '<span>Toplam yağış: <b>' + nfTick.format(totalRain) + ' mm</b></span>' +
+    '<span>Ortalama debi: <b>' +
+      (qAvg == null ? '—' : nfQ.format(qAvg)) + ' m³/s</b></span>' +
+    '<span>Saatlik yağış: <b>' + precipitation.length.toLocaleString('tr-TR') + '</b></span>' +
+    '<span>Debi ölçümü: <b>' + discharge.length.toLocaleString('tr-TR') + '</b></span>';
 }

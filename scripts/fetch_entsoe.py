@@ -118,6 +118,22 @@ def main():
     except Exception as err:
         print(f"Warning: Failed fetching be-generation-mix: {err}", file=sys.stderr)
 
+    # France current generation mix (A75 per production type); overwrite only.
+    print("Fetching France generation mix (A75)...")
+    try:
+        fr_mix = server.fetch_fr_generation_mix()
+        if fr_mix:
+            fr_mix_file = data_dir / "fr-generation-mix.json"
+            fr_mix_file.write_text(
+                json.dumps(fr_mix, ensure_ascii=False, indent=2),
+                encoding="utf-8",
+            )
+            print(f"Wrote {fr_mix_file}")
+        else:
+            print("Warning: No France generation mix data returned.", file=sys.stderr)
+    except Exception as err:
+        print(f"Warning: Failed fetching fr-generation-mix: {err}", file=sys.stderr)
+
 
 if __name__ == "__main__":
     main()

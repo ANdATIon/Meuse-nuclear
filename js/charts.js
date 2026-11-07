@@ -52,7 +52,7 @@ const thresholdPlugin = {
       if (!Number.isFinite(y) || y < area.top - 1 || y > area.bottom + 1) continue;
 
       // 22 m³/s yellow dashed, 20 m³/s red dashed, thinner (1px)
-      const color = line.value >= 21 ? '#fbbf24' : '#f87171';
+      const color = line.color || (line.value >= 21 ? '#D29922' : '#F85149');
 
       ctx.beginPath();
       ctx.setLineDash([4, 4]);
@@ -65,13 +65,13 @@ const thresholdPlugin = {
 
       if (!line.showLabel) continue;
 
-      // Sol tarafta küçük, kutu çerçevesiz etiket (sağdaki son değer etiketleriyle çakışmaz)
+      // Sağ kenarda küçük, kutu çerçevesiz etiket
       let textY = line.labelOffset === 'below' ? y + 8 : y - 8;
       textY = Math.max(area.top + 6, Math.min(textY, area.bottom - 6));
 
       ctx.fillStyle = color;
-      ctx.textAlign = 'left';
-      ctx.fillText(line.label, area.left + 6, textY);
+      ctx.textAlign = 'right';
+      ctx.fillText(line.label, area.right - 6, textY);
     }
 
     ctx.restore();
@@ -151,9 +151,9 @@ const lastValueLabelPlugin = {
 
     items.forEach((item) => {
       roundRectPath(ctx, item.lx, item.ly - 7, item.textW + item.pad * 2, 14, 2);
-      ctx.fillStyle = '#0F151C';
+      ctx.fillStyle = '#12171E';
       ctx.fill();
-      ctx.strokeStyle = '#1F2933';
+      ctx.strokeStyle = '#1C222B';
       ctx.lineWidth = 1;
       ctx.stroke();
 
@@ -183,13 +183,13 @@ const zeroLinePlugin = {
     ctx.beginPath();
     ctx.setLineDash([]);
     ctx.lineWidth = 1;
-    ctx.strokeStyle = 'rgba(226,232,240,.62)';
+    ctx.strokeStyle = 'rgba(110,118,129,.55)';
     ctx.moveTo(area.left, y);
     ctx.lineTo(area.right, y);
     ctx.stroke();
 
-    ctx.font = '600 10px "Segoe UI", system-ui, sans-serif';
-    ctx.fillStyle = 'rgba(226,232,240,.76)';
+    ctx.font = '600 10px "Inter", system-ui, sans-serif';
+    ctx.fillStyle = 'rgba(230,237,243,.6)';
     ctx.textBaseline = 'bottom';
     ctx.fillText('0 MW', area.left + 6, y - 3);
     ctx.restore();
@@ -220,7 +220,7 @@ function buildChart(canvasId, opts) {
         pointRadius: 0,
         pointHoverRadius: 4,
         pointHoverBackgroundColor: opts.color,
-        pointHoverBorderColor: '#0F151C',
+        pointHoverBorderColor: '#12171E',
         pointHoverBorderWidth: 1.5,
         spanGaps: false
       }]
@@ -228,7 +228,7 @@ function buildChart(canvasId, opts) {
     options: {
       responsive: true,
       maintainAspectRatio: false,
-      animation: { duration: 550 },
+      animation: { duration: 200 },
       interaction: { mode: 'index', intersect: false },
       plugins: {
         legend: opts.legend ? {
@@ -254,8 +254,8 @@ function buildChart(canvasId, opts) {
           enabled: !!opts.zeroLine
         },
         tooltip: {
-          backgroundColor: '#0F151C',
-          borderColor: '#1F2933',
+          backgroundColor: 'rgba(10, 14, 19, 0.92)',
+          borderColor: 'rgba(255, 255, 255, 0.06)',
           borderWidth: 1,
           titleColor: '#E6EDF3',
           bodyColor: '#E6EDF3',
@@ -290,7 +290,7 @@ function buildChart(canvasId, opts) {
         x: {
           type: 'linear',
           bounds: 'data',
-          grid: { color: '#1F2933', drawTicks: false },
+          grid: { color: '#141920', drawTicks: false },
           border: { display: false },
           ticks: {
             color: '#6E7681',
@@ -308,7 +308,7 @@ function buildChart(canvasId, opts) {
         y: Object.assign(
           {
             suggestedMax: opts.suggestedMax,
-            grid: { color: '#1F2933', drawTicks: false },
+            grid: { color: '#141920', drawTicks: false },
             border: { display: false },
             ticks: {
               color: '#6E7681',
@@ -334,7 +334,7 @@ function initCharts() {
 
   charts.h = buildChart('hChart', {
     label: 'Su seviyesi (m)',
-    color: '#39C5CF',
+    color: COLORS.h,
     unit: 'm',
     tension: 0.22,
     maxTicks: 7,
@@ -383,7 +383,7 @@ function initCharts() {
 
   charts.q = buildChart('qChart', {
     label: 'Debi (ham)',
-    color: 'rgba(57, 197, 207, 0.8)',
+    color: COLORS.q,
     unit: 'm³/s',
     tension: 0.22,
     maxTicks: 7,
@@ -398,24 +398,24 @@ function initCharts() {
     yFormat: (v) => nfTick.format(v)
   });
 
-  // Ham seri: cyan 1.5px, %80 opaklık, ortalama çizgisinin altında
-  charts.q.data.datasets[0].borderColor = 'rgba(57, 197, 207, 0.8)';
+  // Ham seri: yeşil 1.5px, ortalama çizgisinin altında
+  charts.q.data.datasets[0].borderColor = COLORS.q;
   charts.q.data.datasets[0].borderWidth = 1.5;
   charts.q.data.datasets[0].order = 2;
 
-  // Q grafiğine ikinci seri: 12 günlük hareketli ortalama — solid turuncu, 2px, ham debinin üstünde
+  // Q grafiğine ikinci seri: 12 günlük hareketli ortalama — mavi %50, 2px, ham debinin üstünde
   charts.q.data.datasets.push({
     label: CONFIG.rolling.windowDays + ' günlük ortalama',
     data: [],
-    borderColor: '#f97316',
+    borderColor: CONFIG.colors.rolling,
     borderWidth: 2,
     backgroundColor: 'transparent',
     fill: false,
     tension: 0.3,
     pointRadius: 0,
     pointHoverRadius: 4,
-    pointHoverBackgroundColor: '#f97316',
-    pointHoverBorderColor: '#0F151C',
+    pointHoverBackgroundColor: CONFIG.colors.rolling,
+    pointHoverBorderColor: '#12171E',
     pointHoverBorderWidth: 1.5,
     spanGaps: false,
     order: 1
@@ -423,7 +423,7 @@ function initCharts() {
 
   charts.d = buildChart('dChart', {
     label: 'Günlük ortalama debi (m³/s)',
-    color: '#39C5CF',
+    color: COLORS.d,
     unit: 'm³/s',
     tension: 0.15,
     maxTicks: 9,
@@ -436,7 +436,7 @@ function initCharts() {
   // Karşılaştırma grafiği: veri setleri istasyonlara göre dinamik oluşturulur.
   charts.cmp = buildChart('cmpChart', {
     label: 'Debi (m³/s)',
-    color: '#39C5CF',
+    color: COLORS.h,
     unit: 'm³/s',
     tension: 0.2,
     maxTicks: 8,
@@ -449,6 +449,97 @@ function initCharts() {
     yFormat: (v) => nfTick.format(v)
   });
   charts.cmp.data.datasets = [];
+
+  initWeatherChart();
+}
+
+function initWeatherChart() {
+  if (!$('weatherChart')) return;
+  if (charts.weather) {
+    try { charts.weather.destroy(); } catch (e) {}
+  }
+
+  const chart = buildChart('weatherChart', {
+    label: 'Yağış (mm)',
+    color: '#58A6FF',
+    unit: 'mm',
+    tension: 0,
+    maxTicks: 8,
+    legend: true,
+    legendPosition: 'top',
+    min: 0,
+    beginAtZero: true,
+    tickFormat: (v) => fmtDDMM.format(new Date(v)),
+    titleFormat: (v) => fmtFull.format(new Date(v)),
+    valueFormat: (v) => nfQ.format(v),
+    yFormat: (v) => nfTick.format(v)
+  });
+
+  const rain = chart.data.datasets[0];
+  rain.type = 'bar';
+  rain.label = 'Yağış (mm)';
+  rain.yAxisID = 'y';
+  rain.backgroundColor = 'rgba(88, 166, 255, 0.3)';
+  rain.borderColor = '#58A6FF';
+  rain.borderWidth = 1;
+  rain.borderSkipped = false;
+  rain.barPercentage = 1;
+  rain.categoryPercentage = 1;
+  rain.maxBarThickness = 6;
+  rain.pointRadius = 0;
+  rain.$unit = 'mm';
+  rain.$fmt = (v) => nfQ.format(v);
+  rain.order = 2;
+
+  chart.data.datasets.push({
+    type: 'line',
+    label: 'Debi (m³/s)',
+    data: [],
+    yAxisID: 'y1',
+    borderColor: '#3FB950',
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
+    fill: false,
+    tension: 0.2,
+    pointRadius: 0,
+    pointHoverRadius: 4,
+    pointHoverBackgroundColor: '#3FB950',
+    pointHoverBorderColor: '#12171E',
+    pointHoverBorderWidth: 1.5,
+    spanGaps: false,
+    $unit: 'm³/s',
+    $fmt: (v) => nfQ.format(v),
+    order: 1
+  });
+
+  const axisTicks = {
+    color: '#6E7681',
+    padding: 8,
+    font: { size: 10, family: 'JetBrains Mono' },
+    maxTicksLimit: 6,
+    callback: (value) => nfTick.format(value)
+  };
+
+  chart.options.scales.y = {
+    position: 'left',
+    beginAtZero: true,
+    grid: { color: '#141920', drawTicks: false },
+    border: { display: false },
+    ticks: axisTicks
+  };
+  chart.options.scales.y1 = {
+    position: 'right',
+    beginAtZero: true,
+    grid: { color: '#141920', drawTicks: false, drawOnChartArea: false },
+    border: { display: false },
+    ticks: axisTicks
+  };
+  chart.options.plugins.legend.labels.pointStyle = 'rectRounded';
+  chart.options.plugins.lastValueLabel = { enabled: false };
+  chart.options.plugins.zeroLine = { enabled: false };
+  chart.options.plugins.hubeauThresholds = { enabled: false, lines: [] };
+
+  charts.weather = chart;
 }
 
 function getPlantNominalCapacity(plant) {
@@ -560,7 +651,7 @@ function initPlantCharts() {
         pointRadius: 0,
         pointHoverRadius: 4,
         pointHoverBackgroundColor: color,
-        pointHoverBorderColor: '#0F151C',
+        pointHoverBorderColor: '#12171E',
         pointHoverBorderWidth: 1.5,
         spanGaps: false,
         $unit: 'MW',
@@ -647,4 +738,11 @@ function resetCharts() {
   }
   const beFoot = $('beNuclearFoot');
   if (beFoot) beFoot.innerHTML = '';
+
+  if (charts.weather) {
+    charts.weather.data.datasets.forEach((ds) => { ds.data = []; });
+    charts.weather.update('none');
+  }
+  const weatherFoot = $('weatherFoot');
+  if (weatherFoot) weatherFoot.innerHTML = '';
 }

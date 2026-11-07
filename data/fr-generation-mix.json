@@ -1,0 +1,19 @@
+{
+  "ok": true,
+  "zone": "FR",
+  "source": "ENTSO-E A75 / A16",
+  "updated": "2026-11-06T23:00:00Z",
+  "fetched_at": "2026-11-07T04:30:00Z",
+  "total_mw": 61070.0,
+  "categories": {
+    "nuclear": 41250.0,
+    "wind": 8450.0,
+    "solar": 1830.0,
+    "hydro": 5120.0,
+    "gas": 3260.0,
+    "oil": 120.0,
+    "biomass": 640.0,
+    "coal": 90.0,
+    "other": 310.0
+  }
+}

@@ -1,22 +1,23 @@
 :root{
-    --bg:#0B0F14;
-    --card:#0F151C;
-    --line:#1F2933;
+    --bg:#0A0E13;
+    --card:#12171E;
+    --card-hover:#161C24;
+    --line:#1C222B;
     --text:#E6EDF3;
     --muted:#6E7681;
     --ok:#3FB950;
     --bad:#F85149;
     --warn:#D29922;
     --stale:#6E7681;
-    --flow:#39C5CF;
+    --flow:#58A6FF;
     --power:#58A6FF;
-    --panel:#0F151C;
-    --stroke:#1F2933;
+    --panel:#12171E;
+    --stroke:#1C222B;
     --h:var(--flow);
     --q:var(--flow);
     --d:var(--flow);
     --danger:var(--bad);
-    --radius:2px;
+    --radius:4px;
   }
 
   *{box-sizing:border-box}
@@ -26,7 +27,7 @@
 
   body{
     margin:0;
-    padding:32px 20px 56px;
+    padding:0 20px 56px;
     font-family:"Inter",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
     color:var(--text);
     background:var(--bg);
@@ -37,44 +38,49 @@
 
   /* ---------- top strip ---------- */
   .top-strip{
-    display:flex;align-items:center;justify-content:space-between;gap:12px;
-    padding:8px 12px;margin-bottom:14px;border-radius:2px;
-    border:1px solid var(--line);background:var(--card);
+    position:sticky;top:0;z-index:50;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:7px 12px;margin:0;
+    border:0;border-bottom:1px solid var(--line);
+    background:rgba(10,14,19,.85);
+    -webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);
     font-size:12px;font-weight:600;white-space:nowrap;overflow-x:auto;
   }
-  .top-strip-left{display:flex;align-items:center;gap:14px}
+  .top-strip-left{display:flex;align-items:center;gap:14px;flex:none}
   .top-strip-unit{display:inline-flex;align-items:center;gap:6px;color:var(--text)}
   .top-strip-dot{width:8px;height:8px;border-radius:50%;display:inline-block;flex:none}
   .top-strip-dot.ok{background:var(--ok)}
   .top-strip-dot.bad{background:var(--bad)}
   .top-strip-dot.warn{background:var(--warn)}
   .top-strip-dot.stale{background:var(--stale)}
-  .top-strip-right{display:flex;align-items:center;gap:16px;color:var(--muted);margin-left:auto}
+  .top-strip-right{display:flex;align-items:center;gap:16px;color:var(--muted);margin-left:auto;flex:none}
+  .top-strip-metrics{display:inline-flex;align-items:center;gap:16px}
   .top-strip-item{display:inline-flex;align-items:center;gap:6px}
   .top-strip-item b{color:var(--text);font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums}
+  .top-strip-btn{
+    padding:4px 10px;border-radius:2px;font-size:.7rem;font-weight:600;line-height:1.4;
+    color:#0A0E13;background:var(--power);border:0;
+  }
+  .top-strip-btn:hover{filter:brightness(1.06);transform:none}
+  .offline-badge{
+    padding:3px 8px;border-radius:4px;font-size:.68rem;line-height:1.4;
+    font-weight:600;gap:6px;color:var(--warn);background:var(--card);
+  }
 
   /* ---------- üst bar ---------- */
   .topbar{
     display:flex;flex-wrap:wrap;gap:16px;align-items:center;justify-content:space-between;
-    margin-bottom:18px;
+    padding:20px 2px 16px;margin:0;
   }
 
   .brand{display:flex;align-items:center;gap:14px;min-width:0}
 
   .pulse{
-    position:relative;width:11px;height:11px;border-radius:50%;
+    position:relative;width:9px;height:9px;border-radius:50%;
     background:var(--ok);flex:none;
-    box-shadow:0 0 0 0 rgba(63,185,80,.55);
-    animation:pulse 2.2s ease-out infinite;
   }
-  .pulse.stale{background:var(--warn);box-shadow:none;animation:none}
-  .pulse.down{background:var(--bad);box-shadow:none;animation:none}
-
-  @keyframes pulse{
-    0%{box-shadow:0 0 0 0 rgba(63,185,80,.45)}
-    70%{box-shadow:0 0 0 12px rgba(63,185,80,0)}
-    100%{box-shadow:0 0 0 0 rgba(63,185,80,0)}
-  }
+  .pulse.stale{background:var(--warn)}
+  .pulse.down{background:var(--bad)}
 
   h1{
     margin:0;font-size:1.24rem;font-weight:650;letter-spacing:-.2px;
@@ -88,8 +94,8 @@
 
   .chip{
     display:inline-flex;align-items:center;gap:7px;
-    padding:7px 12px;border-radius:2px;
-    border:1px solid var(--line);
+    padding:7px 12px;border-radius:4px;
+    border:none;
     background:var(--card);
     font-size:.75rem;color:var(--muted);
     white-space:nowrap;
@@ -98,19 +104,19 @@
 
   button{
     font:inherit;font-size:.78rem;font-weight:600;
-    color:#0B0F14;background:var(--power);
+    color:#0A0E13;background:var(--power);
     border:0;border-radius:2px;padding:9px 17px;cursor:pointer;
-    transition:transform .15s ease, filter .15s ease, opacity .15s ease;
+    transition:filter .15s ease, opacity .15s ease;
   }
-  button:hover{filter:brightness(1.08);transform:translateY(-1px)}
-  button:active{transform:translateY(0)}
+  button:hover{filter:brightness(1.06);transform:none}
+  button:active{transform:none}
   button:disabled{opacity:.55;cursor:progress;transform:none;filter:none}
 
   /* ---------- istasyon sekmeleri ---------- */
   .stations{
     display:flex;flex-wrap:wrap;gap:6px;
-    margin-bottom:18px;padding:6px;border-radius:2px;
-    border:1px solid var(--line);background:var(--card);
+    margin-bottom:18px;padding:6px;border-radius:4px;
+    border:none;background:var(--card);
   }
 
   .stations-loading{
@@ -122,14 +128,13 @@
     flex:1 1 240px;min-width:0;text-align:left;
     display:flex;flex-direction:column;gap:3px;
     padding:10px 14px;border-radius:2px;
-    background:transparent;border:1px solid transparent;
+    background:transparent;border:0;
     color:var(--muted);font-size:.8rem;font-weight:600;
-    transition:background .15s ease, border-color .15s ease, color .15s ease;
+    transition:background .15s ease, color .15s ease;
   }
-  .station-tab:hover{background:var(--line);transform:none;filter:none}
+  .station-tab:hover{background:var(--card-hover);transform:none;filter:none}
   .station-tab.is-active{
-    background:var(--line);
-    border-color:var(--line);
+    background:var(--card-hover);
     color:var(--text);
   }
   .station-tab .name{
@@ -156,14 +161,14 @@
   /* ---------- hero ---------- */
   .hero{
     display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-    gap:6px;margin-bottom:16px;
+    gap:8px;margin-bottom:16px;
   }
 
   .hero-card{
     position:relative;overflow:hidden;
-    padding:10px;border-radius:2px;
+    padding:14px 16px;border-radius:4px;
     background:var(--card);
-    border:1px solid var(--line);
+    border:none;
   }
 
   .hero-label{
@@ -182,7 +187,7 @@
   }
   .hero-value .unit{
     font-size:1rem;font-weight:600;letter-spacing:0;
-    color:var(--muted);padding-bottom:6px;
+    color:var(--muted);padding-bottom:6px;opacity:.5;
     font-family:"Inter",sans-serif;
   }
   .hero-value.skeleton{color:var(--line)}
@@ -201,8 +206,8 @@
 
   .seg{
     display:inline-flex;flex-wrap:wrap;gap:4px;
-    padding:4px;border-radius:2px;
-    border:1px solid var(--line);background:var(--card);
+    padding:4px;border-radius:4px;
+    border:none;background:var(--card);
   }
 
   .seg-btn{
@@ -210,12 +215,12 @@
     background:transparent;border:0;color:var(--muted);
     font-size:.76rem;font-weight:600;
   }
-  .seg-btn:hover{background:var(--line);transform:none;filter:none;color:var(--text)}
+  .seg-btn:hover{background:var(--card-hover);transform:none;filter:none;color:var(--text)}
   .seg-btn.is-active{
     background:var(--power);
-    color:#0B0F14;
+    color:#0A0E13;
   }
-  .seg-btn.is-active:hover{background:var(--power);color:#0B0F14}
+  .seg-btn.is-active:hover{background:var(--power);color:#0A0E13}
 
   .custom-range{
     display:flex;flex-wrap:wrap;align-items:center;gap:10px;
@@ -249,13 +254,13 @@
   .range-warn i{font-style:normal}
 
   /* ---------- grafik kartları ---------- */
-  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:6px}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:8px}
 
   .card{
-    position:relative;padding:10px;
-    border-radius:2px;
+    position:relative;padding:14px 16px;
+    border-radius:4px;
     background:var(--card);
-    border:1px solid var(--line);
+    border:none;
     display:flex;flex-direction:column;
   }
   .card.wide{grid-column:1/-1}
@@ -264,8 +269,11 @@
     display:flex;align-items:baseline;justify-content:space-between;gap:12px;
     margin:0 0 10px;
   }
-  .card-head h2{margin:0;font-size:.95rem;font-weight:620;letter-spacing:-.1px;color:var(--text)}
-  .card-head .card-source{font-size:11px;color:var(--muted);text-transform:uppercase;margin-top:2px;font-weight:500}
+  .card-head h2{margin:0;font-size:.82rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+  .card-head .card-source{
+    font-family:"Inter",sans-serif;font-size:.68rem;font-weight:500;
+    color:var(--muted);text-transform:uppercase;margin-top:2px;
+  }
   .card-head .tag{font-size:11px;color:var(--muted);text-transform:uppercase;white-space:nowrap}
 
   .chart-box{position:relative;height:270px}
@@ -354,8 +362,8 @@
   .mix-updated b{color:var(--text);font-weight:600}
   .mix-head-tools{display:flex;align-items:center;justify-content:flex-end;flex-wrap:wrap;gap:10px}
   .mix-toggle{
-    display:inline-flex;gap:3px;padding:3px;border-radius:2px;
-    border:1px solid var(--line);background:var(--bg);
+    display:inline-flex;gap:3px;padding:3px;border-radius:4px;
+    border:none;background:var(--bg);
   }
   .mix-toggle .seg-btn{
     padding:5px 9px;font-size:10px;line-height:1.2;
@@ -363,11 +371,11 @@
   }
   .mix-list{
     display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-    gap:9px 18px;
+    gap:6px 14px;
   }
   .mix-row{
     display:grid;grid-template-columns:minmax(120px,auto) minmax(80px,1fr) 90px;
-    align-items:center;gap:10px;min-width:0;
+    align-items:center;gap:6px;min-width:0;
     border-radius:2px;
   }
   .mix-name{display:flex;flex-direction:column;gap:1px;min-width:0}
@@ -382,7 +390,7 @@
   .mix-row.is-off .mix-label{color:var(--muted)}
   .mix-row.is-off .mix-track{opacity:.55}
   .mix-track{
-    height:8px;border-radius:2px;overflow:hidden;background:var(--line);
+    height:5px;border-radius:2px;overflow:hidden;background:var(--line);
     transition:box-shadow .15s ease;
   }
   .mix-fill{
@@ -411,8 +419,8 @@
   }
   .mix-tooltip{
     position:absolute;z-index:20;min-width:190px;max-width:270px;
-    padding:8px 10px;border:1px solid var(--line);border-radius:2px;
-    background:var(--bg);box-shadow:0 10px 28px rgba(0,0,0,.45);
+    padding:8px 10px;border:none;border-radius:4px;
+    background:var(--card);box-shadow:0 10px 28px rgba(0,0,0,.45);
     pointer-events:none;font-size:.72rem;line-height:1.45;color:var(--muted);
   }
   .mix-tooltip[hidden]{display:none}
@@ -565,8 +573,8 @@
   }
   .notice{
     display:flex;flex-direction:column;gap:5px;
-    padding:8px 10px;border-radius:2px;
-    border:1px solid var(--line);
+    padding:8px 10px;border-radius:4px;
+    border:0;
     border-left:3px solid var(--line);
     background:var(--card);
   }
@@ -599,8 +607,8 @@
     white-space:pre-line;
   }
   .notice-meta{
-    font-size:11px;color:var(--muted);text-transform:uppercase;
-    font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;line-height:1.4;
+    font-family:"Inter",sans-serif;font-size:.68rem;font-weight:500;
+    color:var(--muted);text-transform:uppercase;line-height:1.4;
   }
 
   /* ---------- reaktör özeti ---------- */
@@ -610,28 +618,31 @@
     gap:14px;flex-wrap:wrap;margin:0 2px 12px;
   }
   .section-head h2{
-    margin:0;font-size:1.08rem;font-weight:680;letter-spacing:-.2px;color:var(--text);
+    margin:0;font-size:.82rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);
   }
-  .section-sub{margin:4px 0 0;font-size:11px;color:var(--muted);line-height:1.45;text-transform:uppercase}
-  .section-sub code{color:var(--text);font-size:11px}
+  .section-sub{
+    margin:4px 0 0;font-family:"Inter",sans-serif;font-size:.68rem;font-weight:500;
+    color:var(--muted);line-height:1.45;text-transform:uppercase;
+  }
+  .section-sub code{color:var(--text);font-size:.68rem}
   .section-meta{
-    font-size:11px;color:var(--muted);font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;
-    white-space:nowrap;text-transform:uppercase;
+    font-family:"Inter",sans-serif;font-size:.68rem;font-weight:500;
+    color:var(--muted);white-space:nowrap;text-transform:uppercase;
   }
 
   .reactor-grid{
     display:grid;grid-template-columns:repeat(auto-fit,minmax(255px,1fr));
-    gap:6px;
+    gap:8px;
   }
 
   .reactor-card{
     position:relative;overflow:hidden;
     display:flex;flex-direction:column;gap:6px;
-    padding:10px;border-radius:2px;
-    background:var(--card);border:1px solid var(--line);
+    padding:14px 16px;border-radius:4px;
+    background:var(--card);border:none;
   }
   .reactor-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-  .reactor-plant{font-size:11px;font-weight:650;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
+  .reactor-plant{font-family:"Inter",sans-serif;font-size:.68rem;font-weight:500;letter-spacing:.6px;text-transform:uppercase;color:var(--muted)}
   .reactor-country{font-size:11px;color:var(--muted);margin-top:1px;letter-spacing:.3px;text-transform:uppercase}
   .reactor-name{font-size:1.02rem;font-weight:680;color:var(--text);margin-top:2px}
   .reactor-net{
@@ -640,9 +651,21 @@
     letter-spacing:-1px;font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;
     color:var(--power);
   }
-  .reactor-net .unit{font-size:.8rem;font-weight:600;color:var(--muted);letter-spacing:0;font-family:"Inter",sans-serif}
+  .reactor-net .unit{font-size:.8rem;font-weight:600;color:var(--muted);letter-spacing:0;opacity:.5;font-family:"Inter",sans-serif}
   .reactor-net.negative{color:var(--bad)}
   .reactor-net.none{font-size:1rem;font-weight:600;letter-spacing:0;color:var(--muted);font-family:"Inter",sans-serif}
+  .reactor-cap{
+    height:3px;
+    border-radius:2px;
+    background:var(--line);
+    margin:6px 0 4px;
+    overflow:hidden;
+  }
+  .reactor-cap-fill{
+    height:100%;
+    border-radius:2px;
+    transition:width 0.3s ease;
+  }
   .reactor-metrics{display:flex;align-items:flex-end;gap:18px;flex-wrap:wrap}
   .reactor-metric{display:flex;flex-direction:column;gap:1px;line-height:1.12}
   .reactor-metric-label{
@@ -671,15 +694,15 @@
   .reactor-superseded{font-size:11px;color:var(--stale);text-transform:uppercase}
   .reactor-loading,.plant-loading{
     grid-column:1/-1;display:flex;align-items:center;gap:10px;
-    padding:14px;border-radius:2px;border:1px solid var(--line);
+    padding:14px;border-radius:4px;border:none;
     background:var(--card);font-size:.8rem;color:var(--muted);
   }
 
   /* ---------- santral bölümleri ---------- */
   .plant-section{margin:26px 0 8px}
   .plant-section .section-head{margin-bottom:12px}
-  .plant-section .section-head h2{font-size:1rem}
-  .plant-section .grid{gap:6px}
+  .plant-section .section-head h2{font-size:.82rem}
+  .plant-section .grid{gap:8px}
   .river-panel{
     margin-top:20px;padding-top:18px;
     border-top:1px dashed var(--line);
@@ -687,9 +710,79 @@
   .river-panel .section-head{align-items:center}
   .river-panel .station-tab{flex-basis:260px}
 
+  /* ---------- Chooz hava durumu ---------- */
+  .weather-panel{
+    margin-top:20px;padding-top:18px;
+    border-top:1px dashed var(--line);
+  }
+  .weather-panel .section-head{align-items:center}
+  .weather-now-card{margin-bottom:8px}
+  .weather-current{
+    display:flex;align-items:center;justify-content:space-between;
+    gap:20px;flex-wrap:wrap;
+  }
+  .weather-now{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .weather-temp{
+    font-size:clamp(2rem,5vw,2.8rem);font-weight:720;line-height:1;
+    letter-spacing:-1px;font-family:"JetBrains Mono",monospace;
+    font-variant-numeric:tabular-nums;color:var(--text);
+  }
+  .weather-temp .unit{
+    font-size:.9rem;font-weight:600;letter-spacing:0;color:var(--muted);
+    font-family:"Inter",sans-serif;margin-left:3px;
+  }
+  .weather-condition{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:.9rem;font-weight:600;color:var(--text);
+  }
+  .weather-icon{font-size:1.35rem;line-height:1}
+  .weather-metrics{display:flex;align-items:flex-end;gap:20px;flex-wrap:wrap}
+  .weather-metric{display:flex;flex-direction:column;gap:2px}
+  .weather-metric span{
+    font-size:11px;font-weight:600;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .weather-metric b{
+    font-size:.92rem;font-weight:650;color:var(--text);
+    font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;
+  }
+  .weather-forecast{
+    display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;
+    margin-top:14px;padding-top:12px;border-top:1px solid var(--line);
+  }
+  .weather-day{
+    display:flex;flex-direction:column;align-items:center;gap:4px;
+    padding:8px 6px;border-radius:2px;text-align:center;background:var(--bg);
+  }
+  .weather-day-name{
+    font-size:.68rem;font-weight:600;letter-spacing:.06em;
+    text-transform:uppercase;color:var(--muted);
+  }
+  .weather-day-icon{font-size:1.35rem;line-height:1.2}
+  .weather-day-temps{
+    display:flex;align-items:baseline;gap:6px;
+    font-size:.84rem;font-family:"JetBrains Mono",monospace;
+    font-variant-numeric:tabular-nums;
+  }
+  .weather-day-temps b{color:var(--text);font-weight:650}
+  .weather-day-temps span{color:var(--muted);font-size:.76rem}
+  .weather-day-rain{
+    font-size:.68rem;color:var(--flow);
+    font-family:"JetBrains Mono",monospace;font-variant-numeric:tabular-nums;
+  }
+  .weather-loading,.weather-empty{
+    grid-column:1/-1;display:flex;align-items:center;gap:9px;
+    padding:12px 0;font-size:.8rem;color:var(--muted);
+  }
+  .weather-chart-card{margin-top:8px}
+  .weather-chart-box{height:300px}
+
   @media (max-width:700px){
-    body{padding:16px 12px 36px;overflow-x:hidden}
+    body{padding:0 12px 36px;overflow-x:hidden}
     .wrap{width:100%;max-width:100%;overflow-x:hidden}
+    .top-strip{padding:7px 10px;gap:12px}
+    .top-strip-right{gap:12px}
+    .top-strip-metrics{gap:12px}
 
     /* Stack cards in one column on mobile, EXCEPT reactor-grid which is 2 columns */
     .hero,
@@ -714,7 +807,7 @@
 
     /* Header and toolbars */
     h1{font-size:1.1rem}
-    .topbar{flex-direction:column;align-items:stretch;gap:12px}
+    .topbar{padding:16px 2px 12px;flex-direction:column;align-items:stretch;gap:12px}
     .tools{width:100%;justify-content:space-between}
 
     /* Station tabs */
@@ -761,9 +854,13 @@
 
     .section-head{align-items:flex-start}
     .reactor-net{font-size:1.8rem}
-    .mix-list{grid-template-columns:1fr;gap:9px}
-    .mix-row{grid-template-columns:minmax(95px,auto) minmax(60px,1fr) 80px;gap:8px}
+    .mix-list{grid-template-columns:1fr;gap:6px}
+    .mix-row{grid-template-columns:minmax(95px,auto) minmax(60px,1fr) 80px;gap:6px}
     .mix-updated{text-align:left;margin-left:0}
+    .weather-current{flex-direction:column;align-items:flex-start;gap:12px}
+    .weather-metrics{gap:16px}
+    .weather-forecast{grid-template-columns:repeat(5,minmax(56px,1fr));gap:4px}
+    .weather-chart-box{height:250px}
     .notice-mw{margin-left:0;flex-basis:100%}
     .card-head .toggle{order:3;flex-basis:100%;margin-top:6px;margin-left:0;padding:6px 0}
     .card-head .toggle input{width:16px;height:16px}

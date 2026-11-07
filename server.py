@@ -16,6 +16,7 @@ Endpoints
   GET /api/entsoe/outages?from=YYYY-MM-DD&to=YYYY-MM-DD      (to exclusive)
   GET /api/entsoe/be-nuclear
   GET /api/entsoe/be-generation-mix
+  GET /api/entsoe/fr-generation-mix
 
 Generation is fetched once per bidding zone per day (not per unit), so the
 French and Belgian units share their zone's A73 response.
@@ -61,6 +62,9 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import parse_qs, unquote, urlencode, urlsplit
 from urllib.request import Request, urlopen
 from xml.etree import ElementTree as ET
+
+# PWA manifests are commonly published with a .webmanifest extension.
+mimetypes.add_type("application/manifest+json", ".webmanifest")
 
 # ---------------------------------------------------------------------------
 # Configuration
@@ -1192,6 +1196,25 @@ BE_PSR_CATEGORY = {
     for psr_type in psr_types
 }
 
+# France-specific psrType -> category mapping. B11/B12 are hydro run-of-river
+# and reservoir; B04/B05 are fossil gas and hard coal; B02 is lignite.
+FR_MIX_CATEGORIES = (
+    ("nuclear", ("B14",)),
+    ("wind", ("B18", "B19")),
+    ("solar", ("B16",)),
+    ("hydro", ("B11", "B12")),
+    ("gas", ("B04", "B05")),
+    ("oil", ("B06",)),
+    ("biomass", ("B01",)),
+    ("coal", ("B02",)),
+    ("other", ("B09", "B15", "B20")),
+)
+FR_PSR_CATEGORY = {
+    psr_type: category
+    for category, psr_types in FR_MIX_CATEGORIES
+    for psr_type in psr_types
+}
+
 
 def _iso_utc(ms: int) -> str:
     return (
@@ -1260,6 +1283,72 @@ def fetch_be_generation_mix() -> dict | None:
     return {
         "ok": True,
         "zone": "BE",
+        "source": "ENTSO-E A75 / A16",
+        "updated": _iso_utc(updated_ms),
+        "fetched_at": _iso_utc(int(time.time() * 1000)),
+        "total_mw": round(sum(categories.values()), 2),
+        "categories": categories,
+    }
+
+
+def fetch_fr_generation_mix() -> dict | None:
+    """Latest A75 actual generation per production type for France.
+
+    The upstream response can contain several TimeSeries (and several days of
+    points). Only the newest point for each psrType is kept, then the types are
+    folded into the dashboard categories. The returned payload is small enough
+    to be written to a single static JSON file.
+    """
+    now = datetime.now(timezone.utc)
+    start = now - timedelta(days=2)
+    end = now + timedelta(hours=1)
+
+    raw = http_get(
+        {
+            "documentType": "A75",
+            "processType": "A16",
+            "in_Domain": FR_ZONE_EIC,
+            "periodStart": fmt_param(start),
+            "periodEnd": fmt_param(end),
+        },
+        timeout=45,
+        attempts=2,
+    )
+    if not raw or is_no_data(raw):
+        return None
+
+    latest_by_psr: dict[str, tuple[int, float]] = {}
+    for doc in extract_documents(raw):
+        root = parse_xml(doc)
+        if root is None:
+            continue
+        for timeseries in root.iter():
+            if local_name(timeseries.tag) != "timeseries":
+                continue
+            ts_meta = collect(timeseries)
+            psr_type = str(
+                pick(ts_meta, ["mktpsrtype.psrtype", "psrtype"]) or "UNKNOWN"
+            ).strip().upper()
+            for block in parse_period_blocks(timeseries, ("period",)):
+                for ts_ms, mw in block["points"]:
+                    previous = latest_by_psr.get(psr_type)
+                    if previous is None or ts_ms > previous[0]:
+                        latest_by_psr[psr_type] = (ts_ms, float(mw))
+
+    if not latest_by_psr:
+        return None
+
+    categories = {category: 0.0 for category, _ in FR_MIX_CATEGORIES}
+    for psr_type, (_, mw) in latest_by_psr.items():
+        category = FR_PSR_CATEGORY.get(psr_type, "other")
+        categories[category] += mw
+
+    categories = {key: round(value, 2) for key, value in categories.items()}
+    updated_ms = max(ts_ms for ts_ms, _ in latest_by_psr.values())
+
+    return {
+        "ok": True,
+        "zone": "FR",
         "source": "ENTSO-E A75 / A16",
         "updated": _iso_utc(updated_ms),
         "fetched_at": _iso_utc(int(time.time() * 1000)),
@@ -2110,6 +2199,29 @@ def handle_be_generation_mix(_params):
     return 200, payload
 
 
+def handle_fr_generation_mix(_params):
+    """Latest France actual generation per production type (A75)."""
+    key = "fr_generation_mix|v1"
+    cached = cache_get(key)
+    if cached:
+        return cached["status"], with_cache_meta(cached["payload"], cached)
+
+    require_token()
+    payload = fetch_fr_generation_mix()
+    if payload is None:
+        return 404, {
+            "ok": False,
+            "error": {
+                "code": "no_data",
+                "message": "No France generation mix data available",
+            },
+        }
+
+    payload["cached"] = False
+    cache_put(key, 200, payload, ttl_s=600)
+    return 200, payload
+
+
 def handle_outages(params):
     start, end = parse_window(
         params,
@@ -2246,6 +2358,8 @@ class DashboardHandler(BaseHTTPRequestHandler):
             return handle_be_nuclear(params)
         if path == "/api/entsoe/be-generation-mix":
             return handle_be_generation_mix(params)
+        if path == "/api/entsoe/fr-generation-mix":
+            return handle_fr_generation_mix(params)
         raise ApiError(404, "not_found", "Bilinmeyen API yolu.")
 
     def _serve_static(self, path: str, head_only: bool):

@@ -109,6 +109,7 @@ function entsoeStaticFallback(path) {
   if (path.startsWith('/api/entsoe/outages')) return './data/outages.json';
   if (path.startsWith('/api/entsoe/be-nuclear')) return './data/be-nuclear.json';
   if (path.startsWith('/api/entsoe/be-generation-mix')) return './data/be-generation-mix.json';
+  if (path.startsWith('/api/entsoe/fr-generation-mix')) return './data/fr-generation-mix.json';
   if (path.startsWith('/api/entsoe/aggregated-generation')) return './data/aggregated-generation.json';
   return null;
 }

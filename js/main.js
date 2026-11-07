@@ -29,6 +29,16 @@ async function withBusy(fn) {
   }
 }
 
+function updateOfflineBadge() {
+  const badge = $('offlineBadge');
+  if (!badge) return;
+  badge.hidden = navigator.onLine;
+  if (!navigator.onLine) console.warn('[PWA] Çevrimdışı — önbellekteki veriler gösteriliyor.');
+}
+
+window.addEventListener('online', updateOfflineBadge);
+window.addEventListener('offline', updateOfflineBadge);
+
 /* ------------------------------------------------------------------
    Görünüm: tek istasyon / karşılaştırma
    ------------------------------------------------------------------ */
@@ -109,7 +119,8 @@ async function manualRefresh() {
     await Promise.allSettled([
       loadStationLive(code, { force: true }),
       loadElab(code, { force: true }),
-      loadEntsoe({ force: true })
+      loadEntsoe({ force: true }),
+      loadWeather({ force: true })
     ]);
     if (state.code === code) {
       clampCustomToCoverage();
@@ -135,6 +146,10 @@ async function autoRefresh() {
   }
 
   const code = state.code;
+  // Hava durumu ayrı yürür; gecikmesi reaktör/nehir yenilemesini engellemez.
+  loadWeather().then(() => {
+    if (state.code === code) renderAll();
+  }).catch(() => {});
   await loadStationLive(code, { force: true });
   await loadElab(code);          // TTL dolmadıysa önbellekten döner
   await loadEntsoe();            // backend önbelleği 15 dk tutar
@@ -154,6 +169,7 @@ function scheduleNext() {
 }
 
 function tickCountdown() {
+  if (ui.tzLabel) ui.tzLabel.textContent = fmtClock.format(new Date());
   if (!nextRefreshAt) {
     ui.countdown.textContent = '—';
     return;
@@ -168,8 +184,9 @@ function tickCountdown() {
    Başlangıç
    ------------------------------------------------------------------ */
 async function init() {
-  ui.tzLabel.textContent = tzName + ' (' + tzOffset + ')';
-  ui.tzLabel.title = 'Tüm tarih ve saatler bu saat dilimine çevrilir';
+  ui.tzLabel.title = tzName + ' (' + tzOffset + ') · Tüm tarih ve saatler bu saat dilimine çevrilir';
+  tickCountdown();
+  updateOfflineBadge();
 
   if (typeof Chart === 'undefined') {
     ui.banner.hidden = false;
@@ -179,9 +196,9 @@ async function init() {
     return;
   }
 
-  Chart.defaults.font.family = '"Segoe UI", system-ui, -apple-system, sans-serif';
+  Chart.defaults.font.family = '"Inter", system-ui, -apple-system, sans-serif';
   Chart.defaults.font.size = 11;
-  Chart.defaults.color = '#8ea3c0';
+  Chart.defaults.color = '#6E7681';
   Chart.register(thresholdPlugin);
   Chart.register(zeroLinePlugin);
 
@@ -227,6 +244,7 @@ async function init() {
   // Chooz bölümüne taşındıktan sonra grafikler kurulur.
   await loadPlants();
   initBeMixInteractions();
+  initFrMixInteractions();
   initCharts();
   initPlantCharts();
 
@@ -238,6 +256,8 @@ async function init() {
 
   await withBusy(async () => {
     await loadStations();
+    // Hava durumu arka planda yüklenir; çekirdek verileri asla beklemez.
+    loadWeather({ force: true }).then(() => renderAll()).catch(() => {});
     await Promise.allSettled([
       loadStationLive(state.code, { force: true }),
       loadElab(state.code, { force: true }),
@@ -250,6 +270,12 @@ async function init() {
 
   // Her istasyon için H/Q kayıt sayılarını konsola yazdır
   setTimeout(logStationCounts, 1500);
+
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch((err) => {
+      console.warn('[SW] Kayıt başarısız:', err);
+    });
+  }
 }
 
 init();

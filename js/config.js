@@ -49,8 +49,8 @@ const DAY = 86400000;
 const CONFIG = {
   // Debi eşikleri (m³/s): grafik çizgileri ve durum kartı bu değerleri kullanır.
   thresholds: {
-    twoUnits: { value: 22, label: '22 m³/s – 1 ünite durur', color: '#fbbf24', labelOffset: 'above' },
-    oneUnit:  { value: 20, label: '20 m³/s – 2 ünite durur', color: '#f87171', labelOffset: 'below' }
+    twoUnits: { value: 22, label: '22 m³/s – 1 ünite durur', color: '#D29922', labelOffset: 'above' },
+    oneUnit:  { value: 20, label: '20 m³/s – 2 ünite durur', color: '#F85149', labelOffset: 'below' }
   },
   rolling: {
     windowDays: 12,               // hareketli ortalama penceresi (gün)
@@ -91,9 +91,9 @@ const CONFIG = {
     envPattern: /environ|environmental|[ée]colog|ecological|çevresel|cevresel|milieu/i,
 
     // Bitki/ünite listesi backend'den (/api/entsoe/plants) gelir.
-    unitColors: ['#38bdf8', '#f472b6', '#a78bfa', '#34d399'],
-    plantColors: { chooz: '#38bdf8', tihange: '#a78bfa', doel: '#34d399' },
-    neutralColor: '#94a3b8',
+    unitColors: ['#58A6FF', 'rgba(88, 166, 255, 0.6)', '#3FB950', 'rgba(63, 185, 80, 0.6)'],
+    plantColors: { chooz: '#58A6FF', tihange: 'rgba(63, 185, 80, 0.6)', doel: '#3FB950' },
+    neutralColor: '#6E7681',
 
     // ENTSO-E ReasonCode (A95/B18/B19/B20) çevirileri; bilinmeyen kod ham gösterilir.
     reasonLabels: {
@@ -109,9 +109,9 @@ const CONFIG = {
     }
   },
   colors: {
-    rolling: '#f472b6',           // 12 günlük ortalama çizgisi
-    genOverlay: '#34d399',        // üretim grafiğindeki debi ortalaması
-    compare: ['#38bdf8', '#34d399', '#a78bfa']
+    rolling: 'rgba(88, 166, 255, 0.5)', // 12 günlük ortalama çizgisi
+    genOverlay: 'rgba(88, 166, 255, 0.5)', // üretim grafiğindeki debi ortalaması
+    compare: ['#58A6FF', '#3FB950', 'rgba(88, 166, 255, 0.6)']
   }
 };
 
@@ -144,6 +144,31 @@ const BE_MIX_CAPACITY_MW = {
   oil: 477
 };
 
+// Fransa A75 üretim karması: görünen ad, sıra ve renk.
+const FR_MIX_CATEGORIES = [
+  { key: 'nuclear', label: 'Nükleer', color: '#a78bfa' },
+  { key: 'hydro', label: 'Hidrolik', color: '#34d399' },
+  { key: 'wind', label: 'Rüzgar', color: '#38bdf8' },
+  { key: 'solar', label: 'Güneş', color: '#fbbf24' },
+  { key: 'gas', label: 'Gaz', color: '#f97316' },
+  { key: 'biomass', label: 'Biyokütle', color: '#84cc16' },
+  { key: 'coal', label: 'Kömür', color: '#78716c' },
+  { key: 'oil', label: 'Petrol', color: '#f87171' },
+  { key: 'other', label: 'Diğer', color: '#94a3b8' }
+];
+
+const FR_MIX_CAPACITY_MW = {
+  nuclear: 61000,
+  hydro: 25000,
+  wind: 25000,
+  solar: 20000,
+  gas: 12000,
+  biomass: 2000,
+  coal: 1800,
+  oil: 3000,
+  other: 1500
+};
+
 // NOT: Hareketli ortalama en az CONFIG.rolling.windowDays gün ister.
 // LIVE_WINDOW_DAYS (30) bundan büyük olduğu için ek geçmiş isteği gerekmez.
 const ELAB_WINDOW_DAYS = 365;
@@ -154,7 +179,7 @@ const REQ_TIMEOUT_MS = 30000;       // yanıtlar büyük (~3 MB)
 const REQ_RETRIES = 1;
 
 const LS_STATION = 'hubeau.hydrometrie.station';
-const COLORS = { h: '#38bdf8', q: '#34d399', d: '#a78bfa' };
+const COLORS = { h: '#58A6FF', q: '#3FB950', d: 'rgba(88, 166, 255, 0.6)' };
 
 // H ve Q grafikleri için ortak zaman aralıkları
 const RANGES = {
@@ -223,11 +248,13 @@ const state = {
   plants: [],              // [{ key, label, country, zone, units, river }]
   overviewOrder: [],
   entsoe: null,            // { gen, out, genError, outError, fetchedAt }
+  weather: null,           // { current, daily, hourly, fetchedAt }
   mixMode: 'capacity',     // Belçika üretim karması: 'capacity' | 'share'
+  frMixMode: 'capacity',   // Fransa üretim karması: 'capacity' | 'share'
   busy: 0
 };
 
-const charts = { h: null, q: null, d: null, cmp: null, gen: new Map(), beNuclear: null };
+const charts = { h: null, q: null, d: null, cmp: null, gen: new Map(), beNuclear: null, weather: null };
 const failures = new Map();   // key -> { label, reason }
 
 const UNIT_BY_KEY = new Proxy({

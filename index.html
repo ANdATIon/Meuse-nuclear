@@ -4,6 +4,12 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Reaktörler · Chooz, Tihange, Doel</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0A0E13">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="icon" href="icons/icon-192.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -14,7 +20,16 @@
 
   <div class="top-strip" id="topStrip">
     <div class="top-strip-left" id="topStripUnits"></div>
-    <div class="top-strip-right" id="topStripMetrics"></div>
+    <div class="top-strip-right">
+      <span class="chip offline-badge" id="offlineBadge" hidden>
+        <span class="top-strip-dot warn"></span> Çevrimdışı
+      </span>
+      <div class="top-strip-metrics" id="topStripMetrics"></div>
+      <span class="top-strip-item">SAAT <b id="tzLabel">—</b></span>
+      <span class="top-strip-item">GÜNCELLEME <b id="updatedLabel">—</b></span>
+      <span class="top-strip-item">YENİLEME <b id="countdown">—</b></span>
+      <button id="refreshBtn" class="top-strip-btn" type="button">Yenile</button>
+    </div>
   </div>
 
   <div class="topbar">
@@ -24,12 +39,6 @@
         <h1>Reaktörler</h1>
         <p class="sub">Chooz · Tihange · Doel — ENTSO-E üretim, kullanılabilirlik ve kesinti bildirimleri</p>
       </div>
-    </div>
-    <div class="tools">
-      <span class="chip">Brüksel saati: <b id="tzLabel">—</b></span>
-      <span class="chip">Son güncelleme: <b id="updatedLabel">—</b></span>
-      <span class="chip">Sonraki yenileme: <b id="countdown">—</b></span>
-      <button id="refreshBtn" type="button">Yenile</button>
     </div>
   </div>
 
@@ -121,11 +130,11 @@
           <div class="hero-time" id="statusTrend">—</div>
           <div class="crossings" id="crossings" aria-label="Eşik geçiş geçmişi">
             <div class="cross-row">
-              <span class="cross-thr" style="color:#fbbf24">22 m³/s</span>
+              <span class="cross-thr" style="color:var(--warn)">22 m³/s</span>
               <span class="cross-val" id="cross22">—</span>
             </div>
             <div class="cross-row">
-              <span class="cross-thr" style="color:#f87171">20 m³/s</span>
+              <span class="cross-thr" style="color:var(--bad)">20 m³/s</span>
               <span class="cross-val" id="cross20">—</span>
             </div>
           </div>
@@ -219,6 +228,7 @@
 <script src="js/api.js"></script>
 <script src="js/river.js"></script>
 <script src="js/entsoe.js"></script>
+<script src="js/weather.js"></script>
 <script src="js/charts.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/main.js"></script>

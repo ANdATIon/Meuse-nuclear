@@ -27,10 +27,10 @@ function allOverviewUnits() {
 function unitColor(plant, index) {
   const unit = (plant.units || [])[index] || {};
   const known = {
-    chooz1: '#38bdf8',
-    chooz2: '#f472b6',
-    doel4: '#34d399',
-    tihange3: '#a78bfa'
+    chooz1: '#58A6FF',
+    chooz2: 'rgba(88, 166, 255, 0.6)',
+    doel4: '#3FB950',
+    tihange3: 'rgba(63, 185, 80, 0.6)'
   };
   if (known[unit.key]) return known[unit.key];
   return CONFIG.entsoe.unitColors[index % CONFIG.entsoe.unitColors.length];
@@ -169,7 +169,9 @@ async function loadEntsoe(opts) {
     beAttribution: null,
     beNuclearSeries: [],
     mix: null,
-    mixError: null
+    mixError: null,
+    frMix: null,
+    frMixError: null
   };
 
   const [genResult, outResult] = await Promise.allSettled([
@@ -227,6 +229,18 @@ async function loadEntsoe(opts) {
   } catch (err) {
     entry.mixError = err;
     console.warn('[BE generation mix fetch]', err);
+  }
+
+  // A75 France generation mix (anlık). Diğer yüklemeleri engellemez.
+  try {
+    entry.frMix = await fetchEntsoe('/api/entsoe/fr-generation-mix');
+    if (entry.frMix && entry.frMix.categories) {
+      console.log('[FR generation mix] ' + Object.keys(entry.frMix.categories).length +
+        ' kategori · ' + (entry.frMix.updated || 'tarih yok'));
+    }
+  } catch (err) {
+    entry.frMixError = err;
+    console.warn('[FR generation mix fetch]', err);
   }
 
   // Belçika atribyüsiyonunu hesapla (kendi try/catch bloğunda, hiçbir şeyi engellemez):

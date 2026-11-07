@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 1025,
+      "documents": 1027,
       "matched": 11
     },
     "BE": {
@@ -122,7 +122,7 @@
   "to": "2026-11-15",
   "fromTs": 1791417600000,
   "toTs": 1794700800000,
-  "fetchedAt": 1794016377422,
+  "fetchedAt": 1794040984080,
   "notices": [
     {
       "id": "PK6y4psB_8-lNI3i0tI6Xw",
@@ -7112,7 +7112,7 @@
     }
   ],
   "counts": {
-    "documents": 1307,
+    "documents": 1309,
     "matched": 50,
     "active": 40,
     "activeForced": 5

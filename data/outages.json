@@ -104,8 +104,8 @@
       "plants": [
         "chooz"
       ],
-      "documents": 991,
-      "matched": 11
+      "documents": 995,
+      "matched": 12
     },
     "BE": {
       "key": "BE",
@@ -122,11 +122,42 @@
   "to": "2026-11-18",
   "fromTs": 1791676800000,
   "toTs": 1794960000000,
-  "fetchedAt": 1794325795439,
+  "fetchedAt": 1794347269799,
   "notices": [
     {
+      "id": "gde8vsghYcVU6MzHlRiwFw",
+      "revision": 1,
+      "status": "active",
+      "statusCode": "A05",
+      "kind": "planned",
+      "businessType": "A53",
+      "reasonCode": "B19",
+      "reason": "foreseen maintenance",
+      "reasonText": null,
+      "comment": null,
+      "unitKey": "chooz2",
+      "unitName": "CHOOZ 2",
+      "unitLabel": "Chooz B2",
+      "plantKey": "chooz",
+      "plantLabel": "Chooz",
+      "zoneKey": "FR",
+      "eic": "17W100P100P01962",
+      "installedMW": 1500.0,
+      "availableMW": 1380.0,
+      "schedule": [
+        {
+          "t": 1794355200000,
+          "mw": 1380.0
+        }
+      ],
+      "start": 1794355200000,
+      "end": 1794366000000,
+      "created": 1794332272000,
+      "docType": "A80"
+    },
+    {
       "id": "UxPvdAvuvZE8SXm-SwqOBw",
-      "revision": 2,
+      "revision": 3,
       "status": "active",
       "statusCode": "A05",
       "kind": "planned",
@@ -143,44 +174,44 @@
       "zoneKey": "BE",
       "eic": "22WTIHANG000242R",
       "installedMW": 1030.0,
-      "availableMW": 0.0,
+      "availableMW": 1050.0,
       "schedule": [
         {
-          "t": 1794330000000,
+          "t": 1794331800000,
           "mw": 0.0
         },
         {
-          "t": 1794330900000,
+          "t": 1794332700000,
           "mw": 150.0
         },
         {
-          "t": 1794331800000,
+          "t": 1794333600000,
           "mw": 300.0
         },
         {
-          "t": 1794332700000,
+          "t": 1794334500000,
           "mw": 450.0
         },
         {
-          "t": 1794333600000,
+          "t": 1794335400000,
           "mw": 600.0
         },
         {
-          "t": 1794334500000,
+          "t": 1794336300000,
           "mw": 750.0
         },
         {
-          "t": 1794335400000,
+          "t": 1794337200000,
           "mw": 900.0
         },
         {
-          "t": 1794336300000,
+          "t": 1794338100000,
           "mw": 1050.0
         }
       ],
-      "start": 1794330000000,
-      "end": 1794337200000,
-      "created": 1794317236000,
+      "start": 1794331800000,
+      "end": 1794339000000,
+      "created": 1794328122000,
       "docType": "A80"
     },
     {
@@ -9357,9 +9388,9 @@
     }
   ],
   "counts": {
-    "documents": 1295,
-    "matched": 61,
-    "active": 21,
+    "documents": 1299,
+    "matched": 62,
+    "active": 22,
     "activeForced": 5
   },
   "warnings": []

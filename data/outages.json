@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 995,
+      "documents": 940,
       "matched": 13
     },
     "BE": {
@@ -114,15 +114,15 @@
         "tihange",
         "doel"
       ],
-      "documents": 297,
-      "matched": 50
+      "documents": 288,
+      "matched": 46
     }
   },
-  "from": "2026-10-14",
-  "to": "2026-11-21",
-  "fromTs": 1791936000000,
-  "toTs": 1795219200000,
-  "fetchedAt": 1794607997955,
+  "from": "2026-10-15",
+  "to": "2026-11-22",
+  "fromTs": 1792022400000,
+  "toTs": 1795305600000,
+  "fetchedAt": 1794623124362,
   "notices": [
     {
       "id": "ZMBMKSgjrpp-Dey-vQfysg",
@@ -8953,68 +8953,6 @@
       "docType": "A80"
     },
     {
-      "id": "TosJECmtdCUyuHv4MAV09w",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1775265300000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1775265300000,
-      "end": 1791968400000,
-      "created": 1794303621000,
-      "docType": "A80"
-    },
-    {
-      "id": "W7CVF2VyjHVukUwzCeNWqg",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1775265300000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1775265300000,
-      "end": 1791973800000,
-      "created": 1794303617000,
-      "docType": "A80"
-    },
-    {
       "id": "THezaTAR2DlLw2050fjb8A",
       "revision": 2,
       "status": "cancelled",
@@ -9105,68 +9043,6 @@
       "start": 1775265300000,
       "end": 1792353600000,
       "created": 1794303453000,
-      "docType": "A80"
-    },
-    {
-      "id": "1LuFDqOpFxkYm6FIcwsSAQ",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1775265300000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1775265300000,
-      "end": 1791981000000,
-      "created": 1794303418000,
-      "docType": "A80"
-    },
-    {
-      "id": "4YX4yKyfZNKNt_reLAmJLg",
-      "revision": 8,
-      "status": "active",
-      "statusCode": "A05",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1775265300000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1775265300000,
-      "end": 1791968400000,
-      "created": 1794233083000,
       "docType": "A80"
     },
     {
@@ -9419,9 +9295,9 @@
     }
   ],
   "counts": {
-    "documents": 1292,
-    "matched": 63,
-    "active": 23,
+    "documents": 1228,
+    "matched": 59,
+    "active": 22,
     "activeForced": 5
   },
   "warnings": []

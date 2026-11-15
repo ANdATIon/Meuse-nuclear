@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 945,
+      "documents": 906,
       "matched": 13
     },
     "BE": {
@@ -114,15 +114,15 @@
         "tihange",
         "doel"
       ],
-      "documents": 288,
-      "matched": 46
+      "documents": 264,
+      "matched": 38
     }
   },
-  "from": "2026-10-15",
-  "to": "2026-11-22",
-  "fromTs": 1792022400000,
-  "toTs": 1795305600000,
-  "fetchedAt": 1794688895458,
+  "from": "2026-10-16",
+  "to": "2026-11-23",
+  "fromTs": 1792108800000,
+  "toTs": 1795392000000,
+  "fetchedAt": 1794701770600,
   "notices": [
     {
       "id": "ZMBMKSgjrpp-Dey-vQfysg",
@@ -7651,99 +7651,6 @@
       "docType": "A80"
     },
     {
-      "id": "uERYprKLhjEWhUWab48teA",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1792026000000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1792026000000,
-      "end": 1792072800000,
-      "created": 1794303585000,
-      "docType": "A80"
-    },
-    {
-      "id": "QXP5Sjah6lveQh9tDlS85w",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1792026000000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1792026000000,
-      "end": 1792072800000,
-      "created": 1794233190000,
-      "docType": "A80"
-    },
-    {
-      "id": "ous91mwxLz9eU_qFs_CxFA",
-      "revision": 1,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1792026000000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1792026000000,
-      "end": 1792072800000,
-      "created": 1791957993000,
-      "docType": "A80"
-    },
-    {
       "id": "H3Y8UElMsXh2ecJHqIwbWw",
       "revision": 2,
       "status": "cancelled",
@@ -8606,291 +8513,6 @@
       "docType": "A80"
     },
     {
-      "id": "ooI2SpmZ22vAgAsR5TTaEQ",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 1000.0,
-      "schedule": [
-        {
-          "t": 1791968400000,
-          "mw": 80.0
-        },
-        {
-          "t": 1791969300000,
-          "mw": 140.0
-        },
-        {
-          "t": 1791970200000,
-          "mw": 200.0
-        },
-        {
-          "t": 1791971100000,
-          "mw": 260.0
-        },
-        {
-          "t": 1791972000000,
-          "mw": 300.0
-        },
-        {
-          "t": 1792005300000,
-          "mw": 360.0
-        },
-        {
-          "t": 1792006200000,
-          "mw": 420.0
-        },
-        {
-          "t": 1792007100000,
-          "mw": 480.0
-        },
-        {
-          "t": 1792008000000,
-          "mw": 540.0
-        },
-        {
-          "t": 1792008900000,
-          "mw": 600.0
-        },
-        {
-          "t": 1792009800000,
-          "mw": 660.0
-        },
-        {
-          "t": 1792010700000,
-          "mw": 720.0
-        },
-        {
-          "t": 1792011600000,
-          "mw": 780.0
-        },
-        {
-          "t": 1792012500000,
-          "mw": 820.0
-        },
-        {
-          "t": 1792023300000,
-          "mw": 880.0
-        },
-        {
-          "t": 1792024200000,
-          "mw": 940.0
-        },
-        {
-          "t": 1792025100000,
-          "mw": 1000.0
-        }
-      ],
-      "start": 1791968400000,
-      "end": 1792026000000,
-      "created": 1794303619000,
-      "docType": "A80"
-    },
-    {
-      "id": "s3pAUcStnD9G4gM9gslshg",
-      "revision": 2,
-      "status": "active",
-      "statusCode": "A05",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 1000.0,
-      "schedule": [
-        {
-          "t": 1791968400000,
-          "mw": 80.0
-        },
-        {
-          "t": 1791969300000,
-          "mw": 140.0
-        },
-        {
-          "t": 1791970200000,
-          "mw": 200.0
-        },
-        {
-          "t": 1791971100000,
-          "mw": 260.0
-        },
-        {
-          "t": 1791972000000,
-          "mw": 300.0
-        },
-        {
-          "t": 1792005300000,
-          "mw": 360.0
-        },
-        {
-          "t": 1792006200000,
-          "mw": 420.0
-        },
-        {
-          "t": 1792007100000,
-          "mw": 480.0
-        },
-        {
-          "t": 1792008000000,
-          "mw": 540.0
-        },
-        {
-          "t": 1792008900000,
-          "mw": 600.0
-        },
-        {
-          "t": 1792009800000,
-          "mw": 660.0
-        },
-        {
-          "t": 1792010700000,
-          "mw": 720.0
-        },
-        {
-          "t": 1792011600000,
-          "mw": 780.0
-        },
-        {
-          "t": 1792012500000,
-          "mw": 820.0
-        },
-        {
-          "t": 1792023300000,
-          "mw": 880.0
-        },
-        {
-          "t": 1792024200000,
-          "mw": 940.0
-        },
-        {
-          "t": 1792025100000,
-          "mw": 1000.0
-        }
-      ],
-      "start": 1791968400000,
-      "end": 1792026000000,
-      "created": 1794233021000,
-      "docType": "A80"
-    },
-    {
-      "id": "qrSz9rV_tVKXuTdlADNkUA",
-      "revision": 1,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 1000.0,
-      "schedule": [
-        {
-          "t": 1791968400000,
-          "mw": 80.0
-        },
-        {
-          "t": 1791969300000,
-          "mw": 140.0
-        },
-        {
-          "t": 1791970200000,
-          "mw": 200.0
-        },
-        {
-          "t": 1791971100000,
-          "mw": 260.0
-        },
-        {
-          "t": 1791972000000,
-          "mw": 300.0
-        },
-        {
-          "t": 1792005300000,
-          "mw": 360.0
-        },
-        {
-          "t": 1792006200000,
-          "mw": 420.0
-        },
-        {
-          "t": 1792007100000,
-          "mw": 480.0
-        },
-        {
-          "t": 1792008000000,
-          "mw": 540.0
-        },
-        {
-          "t": 1792008900000,
-          "mw": 600.0
-        },
-        {
-          "t": 1792009800000,
-          "mw": 660.0
-        },
-        {
-          "t": 1792010700000,
-          "mw": 720.0
-        },
-        {
-          "t": 1792011600000,
-          "mw": 780.0
-        },
-        {
-          "t": 1792012500000,
-          "mw": 820.0
-        },
-        {
-          "t": 1792023300000,
-          "mw": 880.0
-        },
-        {
-          "t": 1792024200000,
-          "mw": 940.0
-        },
-        {
-          "t": 1792025100000,
-          "mw": 1000.0
-        }
-      ],
-      "start": 1791968400000,
-      "end": 1792026000000,
-      "created": 1791962001000,
-      "docType": "A80"
-    },
-    {
       "id": "P1vNS7aGnQhZroGSt_0jcg",
       "revision": 33,
       "status": "active",
@@ -8950,68 +8572,6 @@
       "start": 1783719900000,
       "end": 1793469540000,
       "created": 1793469699000,
-      "docType": "A80"
-    },
-    {
-      "id": "THezaTAR2DlLw2050fjb8A",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1775265300000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1775265300000,
-      "end": 1792072800000,
-      "created": 1794303556000,
-      "docType": "A80"
-    },
-    {
-      "id": "6XITuZ78CLhh0mdBMETQiA",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1775265300000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1775265300000,
-      "end": 1792072800000,
-      "created": 1794303554000,
       "docType": "A80"
     },
     {
@@ -9295,9 +8855,9 @@
     }
   ],
   "counts": {
-    "documents": 1233,
-    "matched": 59,
-    "active": 22,
+    "documents": 1170,
+    "matched": 51,
+    "active": 21,
     "activeForced": 5
   },
   "warnings": []

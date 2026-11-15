@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 907,
+      "documents": 908,
       "matched": 13
     },
     "BE": {
@@ -122,11 +122,11 @@
   "to": "2026-11-23",
   "fromTs": 1792108800000,
   "toTs": 1795392000000,
-  "fetchedAt": 1794724486013,
+  "fetchedAt": 1794752286588,
   "notices": [
     {
       "id": "ZMBMKSgjrpp-Dey-vQfysg",
-      "revision": 1,
+      "revision": 2,
       "status": "active",
       "statusCode": "A05",
       "kind": "planned",
@@ -143,16 +143,16 @@
       "zoneKey": "FR",
       "eic": "17W100P100P01954",
       "installedMW": 1500.0,
-      "availableMW": 1260.0,
+      "availableMW": 1235.0,
       "schedule": [
         {
           "t": 1794722400000,
-          "mw": 1260.0
+          "mw": 1235.0
         }
       ],
       "start": 1794722400000,
-      "end": 1794729600000,
-      "created": 1794550250000,
+      "end": 1794733200000,
+      "created": 1794727610000,
       "docType": "A80"
     },
     {
@@ -8855,7 +8855,7 @@
     }
   ],
   "counts": {
-    "documents": 1171,
+    "documents": 1172,
     "matched": 51,
     "active": 21,
     "activeForced": 5

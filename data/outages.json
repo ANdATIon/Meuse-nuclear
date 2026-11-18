@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 926,
+      "documents": 928,
       "matched": 14
     },
     "BE": {
@@ -122,11 +122,11 @@
   "to": "2026-11-26",
   "fromTs": 1792368000000,
   "toTs": 1795651200000,
-  "fetchedAt": 1795023168339,
+  "fetchedAt": 1795044915612,
   "notices": [
     {
       "id": "OX-dEASu7LzYGVniCf9m3Q",
-      "revision": 8,
+      "revision": 11,
       "status": "active",
       "statusCode": "A05",
       "kind": "forced",
@@ -151,8 +151,8 @@
         }
       ],
       "start": 1794952200000,
-      "end": 1795035600000,
-      "created": 1795018555000,
+      "end": 1795041300000,
+      "created": 1795040150000,
       "docType": "A80"
     },
     {
@@ -6700,7 +6700,7 @@
     }
   ],
   "counts": {
-    "documents": 1164,
+    "documents": 1166,
     "matched": 46,
     "active": 22,
     "activeForced": 6

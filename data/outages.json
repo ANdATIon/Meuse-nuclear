@@ -104,8 +104,8 @@
       "plants": [
         "chooz"
       ],
-      "documents": 907,
-      "matched": 13
+      "documents": 913,
+      "matched": 14
     },
     "BE": {
       "key": "BE",
@@ -114,16 +114,47 @@
         "tihange",
         "doel"
       ],
-      "documents": 237,
-      "matched": 33
+      "documents": 236,
+      "matched": 32
     }
   },
-  "from": "2026-10-18",
-  "to": "2026-11-25",
-  "fromTs": 1792281600000,
-  "toTs": 1795564800000,
-  "fetchedAt": 1794938002240,
+  "from": "2026-10-19",
+  "to": "2026-11-26",
+  "fromTs": 1792368000000,
+  "toTs": 1795651200000,
+  "fetchedAt": 1794963342609,
   "notices": [
+    {
+      "id": "OX-dEASu7LzYGVniCf9m3Q",
+      "revision": 5,
+      "status": "active",
+      "statusCode": "A05",
+      "kind": "forced",
+      "businessType": "A54",
+      "reasonCode": "B18",
+      "reason": "failure",
+      "reasonText": null,
+      "comment": null,
+      "unitKey": "chooz1",
+      "unitName": "CHOOZ 1",
+      "unitLabel": "Chooz B1",
+      "plantKey": "chooz",
+      "plantLabel": "Chooz",
+      "zoneKey": "FR",
+      "eic": "17W100P100P01954",
+      "installedMW": 1500.0,
+      "availableMW": 800.0,
+      "schedule": [
+        {
+          "t": 1794952200000,
+          "mw": 800.0
+        }
+      ],
+      "start": 1794952200000,
+      "end": 1794981600000,
+      "created": 1794959929000,
+      "docType": "A80"
+    },
     {
       "id": "ZMBMKSgjrpp-Dey-vQfysg",
       "revision": 2,
@@ -6420,37 +6451,6 @@
       "docType": "A80"
     },
     {
-      "id": "ReITb7onE6wd6gjsBZTw4Q",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1775265300000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1775265300000,
-      "end": 1792353600000,
-      "created": 1794303453000,
-      "docType": "A80"
-    },
-    {
       "id": "Fj0AzS0SKUTyVbZ0-sedNA",
       "revision": 2,
       "status": "cancelled",
@@ -6700,10 +6700,10 @@
     }
   ],
   "counts": {
-    "documents": 1144,
+    "documents": 1149,
     "matched": 46,
-    "active": 21,
-    "activeForced": 5
+    "active": 22,
+    "activeForced": 6
   },
   "warnings": []
 }

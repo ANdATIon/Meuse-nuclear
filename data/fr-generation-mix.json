@@ -2,18 +2,18 @@
   "ok": true,
   "zone": "FR",
   "source": "ENTSO-E A75 / A16",
-  "updated": "2026-11-21T07:45:00Z",
-  "fetched_at": "2026-11-21T08:16:14Z",
-  "total_mw": 56744.3,
+  "updated": "2026-11-21T14:45:00Z",
+  "fetched_at": "2026-11-21T16:10:17Z",
+  "total_mw": 62978.54,
   "categories": {
-    "nuclear": 44040.2,
-    "wind": 1426.59,
-    "solar": 1289.72,
-    "hydro": 7188.66,
-    "gas": 2060.14,
-    "oil": 40.66,
-    "biomass": 274.23,
+    "nuclear": 44207.03,
+    "wind": 3204.32,
+    "solar": 3132.79,
+    "hydro": 7862.45,
+    "gas": 2754.69,
+    "oil": 41.0,
+    "biomass": 277.81,
     "coal": 0.0,
-    "other": 424.1
+    "other": 1498.45
   }
 }

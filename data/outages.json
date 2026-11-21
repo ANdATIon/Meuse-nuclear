@@ -104,7 +104,7 @@
       "plants": [
         "chooz"
       ],
-      "documents": 911,
+      "documents": 879,
       "matched": 14
     },
     "BE": {
@@ -114,15 +114,15 @@
         "tihange",
         "doel"
       ],
-      "documents": 207,
-      "matched": 29
+      "documents": 197,
+      "matched": 28
     }
   },
-  "from": "2026-10-21",
-  "to": "2026-11-28",
-  "fromTs": 1792540800000,
-  "toTs": 1795824000000,
-  "fetchedAt": 1795202234262,
+  "from": "2026-10-22",
+  "to": "2026-11-29",
+  "fromTs": 1792627200000,
+  "toTs": 1795910400000,
+  "fetchedAt": 1795222192096,
   "notices": [
     {
       "id": "OX-dEASu7LzYGVniCf9m3Q",
@@ -6451,37 +6451,6 @@
       "docType": "A80"
     },
     {
-      "id": "UYHk0Qn02SbzUIg5BQP1Kg",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned maintenance",
-      "comment": null,
-      "unitKey": "doel4",
-      "unitName": "DOEL 4",
-      "unitLabel": "Doel 4",
-      "plantKey": "doel",
-      "plantLabel": "Doel",
-      "zoneKey": "BE",
-      "eic": "22WDOELX40000793",
-      "installedMW": 1026.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1775062800000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1775062800000,
-      "end": 1792591200000,
-      "created": 1794303438000,
-      "docType": "A80"
-    },
-    {
       "id": "xT7EIssmJzz__sCz9AbbjA",
       "revision": 2,
       "status": "cancelled",
@@ -6607,8 +6576,8 @@
     }
   ],
   "counts": {
-    "documents": 1118,
-    "matched": 43,
+    "documents": 1076,
+    "matched": 42,
     "active": 21,
     "activeForced": 6
   },

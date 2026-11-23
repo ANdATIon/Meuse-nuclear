@@ -114,7 +114,7 @@
         "tihange",
         "doel"
       ],
-      "documents": 148,
+      "documents": 151,
       "matched": 25
     }
   },
@@ -122,7 +122,7 @@
   "to": "2026-12-01",
   "fromTs": 1792800000000,
   "toTs": 1796083200000,
-  "fetchedAt": 1795403298940,
+  "fetchedAt": 1795436661722,
   "notices": [
     {
       "id": "OX-dEASu7LzYGVniCf9m3Q",
@@ -5043,7 +5043,7 @@
     }
   ],
   "counts": {
-    "documents": 963,
+    "documents": 966,
     "matched": 39,
     "active": 20,
     "activeForced": 6

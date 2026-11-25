@@ -104,8 +104,8 @@
       "plants": [
         "chooz"
       ],
-      "documents": 839,
-      "matched": 14
+      "documents": 832,
+      "matched": 13
     },
     "BE": {
       "key": "BE",
@@ -114,15 +114,15 @@
         "tihange",
         "doel"
       ],
-      "documents": 151,
-      "matched": 22
+      "documents": 148,
+      "matched": 19
     }
   },
-  "from": "2026-10-25",
-  "to": "2026-12-02",
-  "fromTs": 1792886400000,
-  "toTs": 1796169600000,
-  "fetchedAt": 1795553564015,
+  "from": "2026-10-26",
+  "to": "2026-12-03",
+  "fromTs": 1792972800000,
+  "toTs": 1796256000000,
+  "fetchedAt": 1795579774642,
   "notices": [
     {
       "id": "OX-dEASu7LzYGVniCf9m3Q",
@@ -4130,134 +4130,6 @@
       "docType": "A80"
     },
     {
-      "id": "ZtuEXmXuIhuhada8vJVsSA",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned test",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 930.0,
-      "schedule": [
-        {
-          "t": 1792304100000,
-          "mw": 930.0
-        }
-      ],
-      "start": 1792304100000,
-      "end": 1792969200000,
-      "created": 1794303579000,
-      "docType": "A80"
-    },
-    {
-      "id": "Y90z2FgxbBJJfDMYEFDs6w",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned test",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 974.0,
-      "schedule": [
-        {
-          "t": 1792304100000,
-          "mw": 930.0
-        },
-        {
-          "t": 1792318500000,
-          "mw": 974.0
-        }
-      ],
-      "start": 1792304100000,
-      "end": 1792969200000,
-      "created": 1794303496000,
-      "docType": "A80"
-    },
-    {
-      "id": "N-Slw2DQ0oVNPaZtJS2IwQ",
-      "revision": 2,
-      "status": "active",
-      "statusCode": "A05",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Planned test",
-      "comment": null,
-      "unitKey": "tihange3",
-      "unitName": "TIHANGE 3",
-      "unitLabel": "Tihange 3",
-      "plantKey": "tihange",
-      "plantLabel": "Tihange",
-      "zoneKey": "BE",
-      "eic": "22WTIHANG000242R",
-      "installedMW": 1030.0,
-      "availableMW": 930.0,
-      "schedule": [
-        {
-          "t": 1792304100000,
-          "mw": 930.0
-        }
-      ],
-      "start": 1792304100000,
-      "end": 1792969200000,
-      "created": 1794231373000,
-      "docType": "A80"
-    },
-    {
-      "id": "P1vNS7aGnQhZroGSt_0jcg",
-      "revision": 33,
-      "status": "active",
-      "statusCode": "A05",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Causes externes liées à l'environnement\nLe placement et la durée de cet arrêt pour contraintes environnementales seront modifiés en fonction de l'évolution des prévisions météorologiques\n------------\nEnvironmental issues\nThe planning and the duration of the shutdown for environnemental issues could be reassessed according to the weather forecast",
-      "comment": null,
-      "unitKey": "chooz1",
-      "unitName": "CHOOZ 1",
-      "unitLabel": "Chooz B1",
-      "plantKey": "chooz",
-      "plantLabel": "Chooz",
-      "zoneKey": "FR",
-      "eic": "17W100P100P01954",
-      "installedMW": 1500.0,
-      "availableMW": 0.0,
-      "schedule": [
-        {
-          "t": 1785612600000,
-          "mw": 0.0
-        }
-      ],
-      "start": 1785612600000,
-      "end": 1792972800000,
-      "created": 1792938758000,
-      "docType": "A80"
-    },
-    {
       "id": "N5Jj5ZcayWZ3kLX1XG4COg",
       "revision": 48,
       "status": "active",
@@ -4414,9 +4286,9 @@
     }
   ],
   "counts": {
-    "documents": 990,
-    "matched": 36,
-    "active": 19,
+    "documents": 980,
+    "matched": 32,
+    "active": 17,
     "activeForced": 6
   },
   "warnings": []

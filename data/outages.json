@@ -104,8 +104,8 @@
       "plants": [
         "chooz"
       ],
-      "documents": 833,
-      "matched": 10
+      "documents": 817,
+      "matched": 8
     },
     "BE": {
       "key": "BE",
@@ -114,15 +114,15 @@
         "tihange",
         "doel"
       ],
-      "documents": 148,
+      "documents": 145,
       "matched": 19
     }
   },
-  "from": "2026-10-27",
-  "to": "2026-12-04",
-  "fromTs": 1793059200000,
-  "toTs": 1796342400000,
-  "fetchedAt": 1795736971657,
+  "from": "2026-10-28",
+  "to": "2026-12-05",
+  "fromTs": 1793145600000,
+  "toTs": 1796428800000,
+  "fetchedAt": 1795767518768,
   "notices": [
     {
       "id": "OX-dEASu7LzYGVniCf9m3Q",
@@ -3758,68 +3758,6 @@
       "docType": "A80"
     },
     {
-      "id": "GFjJrbaLkMtCOX-YbTox6A",
-      "revision": 8,
-      "status": "active",
-      "statusCode": "A05",
-      "kind": "forced",
-      "businessType": "A54",
-      "reasonCode": "B18",
-      "reason": "failure",
-      "reasonText": null,
-      "comment": null,
-      "unitKey": "chooz1",
-      "unitName": "CHOOZ 1",
-      "unitLabel": "Chooz B1",
-      "plantKey": "chooz",
-      "plantLabel": "Chooz",
-      "zoneKey": "FR",
-      "eic": "17W100P100P01954",
-      "installedMW": 1500.0,
-      "availableMW": 855.0,
-      "schedule": [
-        {
-          "t": 1793051520000,
-          "mw": 855.0
-        }
-      ],
-      "start": 1793051520000,
-      "end": 1793134800000,
-      "created": 1793119896000,
-      "docType": "A80"
-    },
-    {
-      "id": "IzatrrdjaSKbUYxZrybGpw",
-      "revision": 2,
-      "status": "cancelled",
-      "statusCode": "A09",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "La durée indiquée de l'indisponibilité correspond à une durée forfaitaire de 24h, évaluée sur la base du retour d'expérience sur le parc nucléaire.\nUne nouvelle version sera publiée en fonction des diagnostics et des analyses qui seront réalisés.\n--------\nThe duration of the unavailability is a pre-defined 24 hours period, assessed on the basis of the nuclear fleet feedback\nA new version will be published according to diagnostic and technical instruction.",
-      "comment": null,
-      "unitKey": "chooz1",
-      "unitName": "CHOOZ 1",
-      "unitLabel": "Chooz B1",
-      "plantKey": "chooz",
-      "plantLabel": "Chooz",
-      "zoneKey": "FR",
-      "eic": "17W100P100P01954",
-      "installedMW": 1500.0,
-      "availableMW": 470.0,
-      "schedule": [
-        {
-          "t": 1793030400000,
-          "mw": 470.0
-        }
-      ],
-      "start": 1793030400000,
-      "end": 1793116800000,
-      "created": 1793030543000,
-      "docType": "A80"
-    },
-    {
       "id": "WCwVBlmp50gDl11vDtkbgw",
       "revision": 2,
       "status": "cancelled",
@@ -4193,10 +4131,10 @@
     }
   ],
   "counts": {
-    "documents": 981,
-    "matched": 29,
-    "active": 14,
-    "activeForced": 4
+    "documents": 962,
+    "matched": 27,
+    "active": 13,
+    "activeForced": 3
   },
   "warnings": []
 }

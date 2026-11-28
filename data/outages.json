@@ -104,8 +104,8 @@
       "plants": [
         "chooz"
       ],
-      "documents": 827,
-      "matched": 8
+      "documents": 788,
+      "matched": 5
     },
     "BE": {
       "key": "BE",
@@ -114,15 +114,15 @@
         "tihange",
         "doel"
       ],
-      "documents": 156,
+      "documents": 139,
       "matched": 19
     }
   },
-  "from": "2026-10-28",
-  "to": "2026-12-05",
-  "fromTs": 1793145600000,
-  "toTs": 1796428800000,
-  "fetchedAt": 1795804054949,
+  "from": "2026-10-29",
+  "to": "2026-12-06",
+  "fromTs": 1793232000000,
+  "toTs": 1796515200000,
+  "fetchedAt": 1795830055080,
   "notices": [
     {
       "id": "OX-dEASu7LzYGVniCf9m3Q",
@@ -3665,99 +3665,6 @@
       "docType": "A80"
     },
     {
-      "id": "tjFtT-Es6Ff5vhv6s38-7w",
-      "revision": 1,
-      "status": "active",
-      "statusCode": "A05",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Remontée à puissance maximale sans palier.\n--------\nRamp-up to maximal power without load threshold.",
-      "comment": null,
-      "unitKey": "chooz1",
-      "unitName": "CHOOZ 1",
-      "unitLabel": "Chooz B1",
-      "plantKey": "chooz",
-      "plantLabel": "Chooz",
-      "zoneKey": "FR",
-      "eic": "17W100P100P01954",
-      "installedMW": 1500.0,
-      "availableMW": 1450.0,
-      "schedule": [
-        {
-          "t": 1793205000000,
-          "mw": 1450.0
-        }
-      ],
-      "start": 1793205000000,
-      "end": 1793219400000,
-      "created": 1793204977000,
-      "docType": "A80"
-    },
-    {
-      "id": "eXUAQxE_78G-YZlaAE_9Qw",
-      "revision": 2,
-      "status": "active",
-      "statusCode": "A05",
-      "kind": "forced",
-      "businessType": "A54",
-      "reasonCode": "B18",
-      "reason": "failure",
-      "reasonText": null,
-      "comment": null,
-      "unitKey": "chooz1",
-      "unitName": "CHOOZ 1",
-      "unitLabel": "Chooz B1",
-      "plantKey": "chooz",
-      "plantLabel": "Chooz",
-      "zoneKey": "FR",
-      "eic": "17W100P100P01954",
-      "installedMW": 1500.0,
-      "availableMW": 1270.0,
-      "schedule": [
-        {
-          "t": 1793178000000,
-          "mw": 1270.0
-        }
-      ],
-      "start": 1793178000000,
-      "end": 1793205000000,
-      "created": 1793204774000,
-      "docType": "A80"
-    },
-    {
-      "id": "nDpTLESd_ElXAjmRG-dVFg",
-      "revision": 4,
-      "status": "active",
-      "statusCode": "A05",
-      "kind": "planned",
-      "businessType": "A53",
-      "reasonCode": "A95",
-      "reason": "complementary information",
-      "reasonText": "Remontée à puissance maximale sans palier.\n--------\nRamp-up to maximal power without load threshold.",
-      "comment": null,
-      "unitKey": "chooz1",
-      "unitName": "CHOOZ 1",
-      "unitLabel": "Chooz B1",
-      "plantKey": "chooz",
-      "plantLabel": "Chooz",
-      "zoneKey": "FR",
-      "eic": "17W100P100P01954",
-      "installedMW": 1500.0,
-      "availableMW": 1450.0,
-      "schedule": [
-        {
-          "t": 1793134800000,
-          "mw": 1450.0
-        }
-      ],
-      "start": 1793134800000,
-      "end": 1793205000000,
-      "created": 1793204803000,
-      "docType": "A80"
-    },
-    {
       "id": "WCwVBlmp50gDl11vDtkbgw",
       "revision": 2,
       "status": "cancelled",
@@ -4131,10 +4038,10 @@
     }
   ],
   "counts": {
-    "documents": 983,
-    "matched": 27,
-    "active": 13,
-    "activeForced": 3
+    "documents": 927,
+    "matched": 24,
+    "active": 10,
+    "activeForced": 2
   },
   "warnings": []
 }
